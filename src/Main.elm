@@ -34,8 +34,43 @@ type Page
     | TheGame
 
 
+type CharacterClass
+    = Wanderer
+    | Cleric
+    | Mage
+    | Warrior
+    | Barbarian
+
+
+classToString : CharacterClass -> String
+classToString class =
+    case class of
+        Wanderer ->
+            "Wanderer"
+
+        Cleric ->
+            "Cleric"
+
+        Mage ->
+            "Mage"
+
+        Warrior ->
+            "Warrior"
+
+        Barbarian ->
+            "Barbarian"
+
+
+type alias Character =
+    { class : CharacterClass
+    , name : String
+    , stats : List (String, Int)
+    }
+
+
 type alias Model =
     { currPage : Page
+    , character : Character
     }
 
 
@@ -46,6 +81,18 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { currPage = MenuPage
+      , character =
+            Character Warrior
+                "Apathy"
+                [ ( "strength", 18 )
+                , ( "vitality", 6 )
+                , ( "agility", 8 )
+                , ( "intelligence", 12 )
+                , ( "experience", 0 )
+                , ( "luck", 4 )
+                , ( "aura", 9 )
+                , ( "morality", 7 )
+                ]
       }
     , Cmd.none
     )
@@ -77,7 +124,7 @@ update msg model =
 
 optionUpdate : Model -> Page -> Model
 optionUpdate model selected =
-    { currPage = selected }
+    { model | currPage = selected }
 
 
 
@@ -94,7 +141,7 @@ view model =
             holdingPage "Dungeon Generator"
 
         CharacterGenerator ->
-            holdingPage "Character Generator"
+            characterGeneratorPage model
 
         TheGame ->
             holdingPage "The Game"
@@ -122,12 +169,34 @@ holdingPage pageName =
     , body =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
-            [ el [ Font.size 40, Font.color white ] <|
-                text pageName
-            , backButton
-            ]
+                [ el [ Font.size 40, Font.color white ] <|
+                    text pageName
+                , backButton
+                ]
         ]
     }
+
+
+characterGeneratorPage : Model -> Browser.Document Msg
+characterGeneratorPage model =
+    { title = "Dungeon of Doom - Character Generator"
+    , body =
+        [ layout [ Background.color black ] <|
+            column [ width fill, paddingXY 0 100 ]
+                (List.map printStats model.character.stats)
+                -- [ el [ Font.size 40, Font.color white ] <|
+                --     text model.character.name
+                -- , List.map printStats model.character.stats
+                -- , backButton
+                -- ]
+        ]
+    }
+
+
+printStats : (String, Int) -> Element msg
+printStats (name, val) =
+    el [ Font.size 20, Font.color white ] <|
+        text (name ++ ": " ++ String.fromInt val)
 
 
 backButton : Element Msg
