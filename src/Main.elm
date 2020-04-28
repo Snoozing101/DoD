@@ -64,7 +64,7 @@ classToString class =
 type alias Character =
     { class : CharacterClass
     , name : String
-    , stats : List (String, Int)
+    , stats : List ( String, Int )
     }
 
 
@@ -183,18 +183,18 @@ characterGeneratorPage model =
     , body =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
-                (List.map printStats model.character.stats)
-                -- [ el [ Font.size 40, Font.color white ] <|
-                --     text model.character.name
-                -- , List.map printStats model.character.stats
-                -- , backButton
-                -- ]
+                ([ el [ Font.size 40, Font.color white ] <|
+                    text model.character.name
+                ]
+                ++ [ el [ Font.size 20, Font.color white ] <| text (classToString model.character.class) ]
+                ++ List.map printStats model.character.stats
+                ++ [ backButton ])
         ]
     }
 
 
-printStats : (String, Int) -> Element msg
-printStats (name, val) =
+printStats : ( String, Int ) -> Element msg
+printStats ( name, val ) =
     el [ Font.size 20, Font.color white ] <|
         text (name ++ ": " ++ String.fromInt val)
 
