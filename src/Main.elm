@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Array
 import Browser
 import Element exposing (..)
 import Element.Background as Background
@@ -7,6 +8,7 @@ import Element.Border as Border
 import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
+import Random
 
 
 
@@ -84,17 +86,17 @@ init _ =
       , character =
             Character Warrior
                 "Apathy"
-                [ ( "strength", 18 )
-                , ( "vitality", 6 )
-                , ( "agility", 8 )
-                , ( "intelligence", 12 )
+                [ ( "strength", 0 )
+                , ( "vitality", 0 )
+                , ( "agility", 0 )
+                , ( "intelligence", 0 )
                 , ( "experience", 0 )
-                , ( "luck", 4 )
-                , ( "aura", 9 )
-                , ( "morality", 7 )
+                , ( "luck", 0 )
+                , ( "aura", 0 )
+                , ( "morality", 0 )
                 ]
       }
-    , Cmd.none
+    , Random.generate NewCharacter newStats
     )
 
 
@@ -113,6 +115,8 @@ subscriptions _ =
 
 type Msg
     = OptionSelected Page
+    | NewCharacter (List Int)
+    | ReRollCharacter
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -121,10 +125,54 @@ update msg model =
         OptionSelected page ->
             ( optionUpdate model page, Cmd.none )
 
+        NewCharacter stats ->
+            ( updateModelStats model stats, Cmd.none )
+
+        ReRollCharacter ->
+            ( model, Random.generate NewCharacter newStats )
+
 
 optionUpdate : Model -> Page -> Model
 optionUpdate model selected =
     { model | currPage = selected }
+
+
+updateModelStats : Model -> List Int -> Model
+updateModelStats model statList =
+    { model | character = updateCharacterStats model.character statList }
+
+
+updateCharacterStats : Character -> List Int -> Character
+updateCharacterStats character statList =
+    { character | stats = updateStats character.stats statList }
+
+
+updateStats : List ( String, Int ) -> List Int -> List ( String, Int )
+updateStats oldCharacterStats statList =
+    let
+        updater =
+            setNewStatValue statList
+    in
+    List.indexedMap updater oldCharacterStats
+
+
+setNewStatValue : List Int -> Int -> ( String, Int ) -> ( String, Int )
+setNewStatValue statList index oldStat =
+    let
+        newArray =
+            Array.fromList statList
+
+        newValue =
+            Maybe.withDefault 0 (Array.get index newArray)
+
+        statType =
+            Tuple.first oldStat
+    in
+    if statType /= "experience" then
+        ( statType, newValue )
+
+    else
+        ( statType, 0 )
 
 
 
@@ -185,10 +233,13 @@ characterGeneratorPage model =
             column [ width fill, paddingXY 0 100 ]
                 ([ el [ Font.size 40, Font.color white ] <|
                     text model.character.name
-                ]
-                ++ [ el [ Font.size 20, Font.color white ] <| text (classToString model.character.class) ]
-                ++ List.map printStats model.character.stats
-                ++ [ backButton ])
+                 , el [ Font.size 20, Font.color white ] <| text (classToString model.character.class)
+                 ]
+                    ++ List.map printStats model.character.stats
+                    ++ [ backButton
+                       , rerollButton
+                       ]
+                )
         ]
     }
 
@@ -197,6 +248,18 @@ printStats : ( String, Int ) -> Element msg
 printStats ( name, val ) =
     el [ Font.size 20, Font.color white ] <|
         text (name ++ ": " ++ String.fromInt val)
+
+
+rerollButton : Element Msg
+rerollButton =
+    Input.button
+        [ Background.color blue
+        , Element.focused
+            [ Background.color blue ]
+        ]
+        { onPress = Just ReRollCharacter
+        , label = text "Reroll Character"
+        }
 
 
 backButton : Element Msg
@@ -256,3 +319,8 @@ main =
         , update = update
         , subscriptions = subscriptions
         }
+
+
+newStats : Random.Generator (List Int)
+newStats =
+    Random.list 8 (Random.int 1 5)
