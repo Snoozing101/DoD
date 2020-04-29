@@ -29,6 +29,45 @@ options =
     ]
 
 
+type CharacterStat
+    = Strength
+    | Vitality
+    | Agility
+    | Intelligence
+    | Experience
+    | Luck
+    | Aura
+    | Morality
+
+
+characterStatToString : CharacterStat -> String
+characterStatToString stat =
+    case stat of
+        Strength ->
+            "Strength"
+
+        Vitality ->
+            "Vitality"
+
+        Agility ->
+            "Agility"
+
+        Intelligence ->
+            "Intelligence"
+
+        Experience ->
+            "Experience"
+
+        Luck ->
+            "Luck"
+
+        Aura ->
+            "Aura"
+
+        Morality ->
+            "Morality"
+
+
 type Page
     = MenuPage
     | DungeonGenerator
@@ -66,7 +105,7 @@ classToString class =
 type alias Character =
     { class : CharacterClass
     , name : String
-    , stats : List ( String, Int )
+    , stats : List ( CharacterStat, Int )
     }
 
 
@@ -84,16 +123,16 @@ init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { currPage = MenuPage
       , character =
-            Character Warrior
+            Character Wanderer
                 "Apathy"
-                [ ( "strength", 0 )
-                , ( "vitality", 0 )
-                , ( "agility", 0 )
-                , ( "intelligence", 0 )
-                , ( "experience", 0 )
-                , ( "luck", 0 )
-                , ( "aura", 0 )
-                , ( "morality", 0 )
+                [ ( Strength, 0 )
+                , ( Vitality, 0 )
+                , ( Agility, 0 )
+                , ( Intelligence, 0 )
+                , ( Experience, 0 )
+                , ( Luck, 0 )
+                , ( Aura, 0 )
+                , ( Morality, 0 )
                 ]
       }
     , Random.generate NewCharacter newStats
@@ -147,7 +186,7 @@ updateCharacterStats character statList =
     { character | stats = updateStats character.stats statList }
 
 
-updateStats : List ( String, Int ) -> List Int -> List ( String, Int )
+updateStats : List ( CharacterStat, Int ) -> List Int -> List ( CharacterStat, Int )
 updateStats oldCharacterStats statList =
     let
         updater =
@@ -156,7 +195,7 @@ updateStats oldCharacterStats statList =
     List.indexedMap updater oldCharacterStats
 
 
-setNewStatValue : List Int -> Int -> ( String, Int ) -> ( String, Int )
+setNewStatValue : List Int -> Int -> ( CharacterStat, Int ) -> ( CharacterStat, Int )
 setNewStatValue statList index oldStat =
     let
         newArray =
@@ -168,11 +207,11 @@ setNewStatValue statList index oldStat =
         statType =
             Tuple.first oldStat
     in
-    if statType /= "experience" then
+    if statType /= Experience then
         ( statType, newValue )
 
     else
-        ( statType, 0 )
+        ( statType, 1 )
 
 
 
@@ -244,10 +283,10 @@ characterGeneratorPage model =
     }
 
 
-printStats : ( String, Int ) -> Element msg
+printStats : ( CharacterStat, Int ) -> Element msg
 printStats ( name, val ) =
     el [ Font.size 20, Font.color white ] <|
-        text (name ++ ": " ++ String.fromInt val)
+        text (characterStatToString name ++ ": " ++ String.fromInt val)
 
 
 rerollButton : Element Msg
