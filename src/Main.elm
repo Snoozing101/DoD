@@ -160,6 +160,8 @@ type Msg
     = OptionSelected Page
     | NewCharacter (List Int)
     | ReRollCharacter
+    | IncrementStat CharacterStat
+    | DecrementStat CharacterStat
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -173,6 +175,66 @@ update msg model =
 
         ReRollCharacter ->
             ( model, Random.generate NewCharacter newStats )
+
+        IncrementStat characterStat ->
+            ( incrementCharacterStat model characterStat, Cmd.none )
+
+        DecrementStat characterStat ->
+            ( decrementCharacterStat model characterStat, Cmd.none )
+
+
+incrementCharacterStat : Model -> CharacterStat -> Model
+incrementCharacterStat model characterStat =
+    let
+        currCharacter =
+            model.character
+
+        oldStats =
+            currCharacter.stats
+
+        updatedStats =
+            List.map (\x -> incrementStat x characterStat) oldStats
+
+        updatedCharacter =
+            { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints - 1 }
+    in
+    { model | character = updatedCharacter }
+
+
+incrementStat : ( CharacterStat, Int ) -> CharacterStat -> ( CharacterStat, Int )
+incrementStat ( characterStat, val ) matchStat =
+    if characterStat == matchStat then
+        ( characterStat, val + 1 )
+
+    else
+        ( characterStat, val )
+
+
+decrementCharacterStat : Model -> CharacterStat -> Model
+decrementCharacterStat model characterStat =
+    let
+        currCharacter =
+            model.character
+
+        oldStats =
+            currCharacter.stats
+
+        updatedStats =
+            List.map (\x -> decrementStat x characterStat) oldStats
+
+        updatedCharacter =
+            { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints + 1 }
+    in
+    { model | character = updatedCharacter }
+
+
+decrementStat : ( CharacterStat, Int ) -> CharacterStat -> ( CharacterStat, Int )
+decrementStat ( characterStat, val ) matchStat =
+    if characterStat == matchStat then
+        ( characterStat, val - 1 )
+
+    else
+        ( characterStat, val )
 
 
 optionUpdate : Model -> Page -> Model
@@ -280,6 +342,10 @@ holdingPage pageName =
 
 characterGeneratorPage : Model -> Browser.Document Msg
 characterGeneratorPage model =
+    let
+        currCharacter =
+            model.character
+    in
     { title = "Dungeon of Doom - Character Generator"
     , body =
         [ layout [ Background.color black ] <|
@@ -288,9 +354,9 @@ characterGeneratorPage model =
                     text model.character.name
                  , el [ Font.size 20, Font.color white ] <| text (classToString model.character.class)
                  ]
-                    ++ List.map printStats model.character.stats
-                    ++ [ buildStatElement "Stat Points" model.character.statPoints
-                       , buildStatElement "Experience" model.character.experience
+                    ++ List.map (printStats currCharacter.statPoints) currCharacter.stats
+                    ++ [ buildStatElement "Stat Points" currCharacter.statPoints
+                       , buildStatElement "Experience" currCharacter.experience
                        , backButton
                        , rerollButton
                        ]
@@ -299,10 +365,59 @@ characterGeneratorPage model =
     }
 
 
-printStats : ( CharacterStat, Int ) -> Element msg
-printStats ( name, val ) =
-    buildStatElement (characterStatToString name) val
+printStats : Int -> ( CharacterStat, Int ) -> Element Msg
+printStats statPoints ( characterStat, val ) =
+    row []
+        [ buildStatElement (characterStatToString characterStat) val
+        , adjustButtons statPoints characterStat val
+        ]
 
+
+adjustButtons : Int -> CharacterStat -> Int -> Element Msg
+adjustButtons statPoints characterStat statValue =
+    let
+        incrementMessage =
+            processIncrement statPoints characterStat
+        decrementMessage =
+            processDecrement statValue characterStat
+    in
+    row [ Font.color white, spacing 3, padding 5 ]
+        [ Input.button
+            [ width (px 20)
+            , Border.width 1
+            , Border.color darkGrey
+            , Background.color grey
+            , Font.color black
+            ]
+            { onPress = incrementMessage
+            , label = text "+"
+            }
+        , Input.button
+            [ width (px 20)
+            , Border.width 1
+            , Border.color darkGrey
+            , Background.color grey
+            , Font.color black
+            ]
+            { onPress = decrementMessage
+            , label = text "-"
+            }
+        ]
+
+processIncrement : Int -> CharacterStat -> Maybe Msg
+processIncrement statPoints characterStat =
+    if statPoints > 0 then
+        Just (IncrementStat characterStat)
+    else
+        Nothing
+
+
+processDecrement : Int -> CharacterStat -> Maybe Msg
+processDecrement statValue characterStat =
+    if statValue > 0 then
+        Just (DecrementStat characterStat)
+    else
+        Nothing
 
 buildStatElement : String -> Int -> Element msg
 buildStatElement name val =
@@ -365,6 +480,16 @@ green =
 white : Color
 white =
     rgb255 255 255 255
+
+
+grey : Color
+grey =
+    rgb255 200 200 200
+
+
+darkGrey : Color
+darkGrey =
+    rgb255 100 100 100
 
 
 
