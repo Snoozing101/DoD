@@ -68,6 +68,11 @@ characterStatToString stat =
             "Morality"
 
 
+baseStatModifier : Int -> Int
+baseStatModifier stat =
+    stat + 2
+
+
 type Page
     = MenuPage
     | DungeonGenerator
@@ -106,6 +111,7 @@ type alias Character =
     { class : CharacterClass
     , name : String
     , stats : List ( CharacterStat, Int )
+    , statPoints : Int
     }
 
 
@@ -134,6 +140,7 @@ init _ =
                 , ( Aura, 0 )
                 , ( Morality, 0 )
                 ]
+                0
       }
     , Random.generate NewCharacter newStats
     )
@@ -182,8 +189,22 @@ updateModelStats model statList =
 
 
 updateCharacterStats : Character -> List Int -> Character
-updateCharacterStats character statList =
-    { character | stats = updateStats character.stats statList }
+updateCharacterStats character randomList =
+    let
+        ( statPoints, statList ) =
+            splitRandomList randomList
+    in
+    { character | stats = updateStats character.stats statList, statPoints = statPoints }
+
+
+splitRandomList : List Int -> ( Int, List Int )
+splitRandomList randomList =
+    case randomList of
+        statPoints :: statList ->
+            ( statPoints, statList )
+
+        [] ->
+            ( 0, [] )
 
 
 updateStats : List ( CharacterStat, Int ) -> List Int -> List ( CharacterStat, Int )
@@ -208,7 +229,7 @@ setNewStatValue statList index oldStat =
             Tuple.first oldStat
     in
     if statType /= Experience then
-        ( statType, newValue )
+        ( statType, baseStatModifier newValue )
 
     else
         ( statType, 1 )
@@ -275,12 +296,19 @@ characterGeneratorPage model =
                  , el [ Font.size 20, Font.color white ] <| text (classToString model.character.class)
                  ]
                     ++ List.map printStats model.character.stats
-                    ++ [ backButton
+                    ++ [ printStatPoints model.character.statPoints
+                       , backButton
                        , rerollButton
                        ]
                 )
         ]
     }
+
+
+printStatPoints : Int -> Element msg
+printStatPoints statPoints =
+    el [ Font.size 20, Font.color white ] <|
+        text ("Stat Points: " ++ String.fromInt statPoints)
 
 
 printStats : ( CharacterStat, Int ) -> Element msg
@@ -362,4 +390,4 @@ main =
 
 newStats : Random.Generator (List Int)
 newStats =
-    Random.list 8 (Random.int 1 5)
+    Random.list 9 (Random.int 1 5)
