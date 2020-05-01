@@ -34,7 +34,6 @@ type CharacterStat
     | Vitality
     | Agility
     | Intelligence
-    | Experience
     | Luck
     | Aura
     | Morality
@@ -54,9 +53,6 @@ characterStatToString stat =
 
         Intelligence ->
             "Intelligence"
-
-        Experience ->
-            "Experience"
 
         Luck ->
             "Luck"
@@ -111,6 +107,7 @@ type alias Character =
     { class : CharacterClass
     , name : String
     , stats : List ( CharacterStat, Int )
+    , experience : Int
     , statPoints : Int
     }
 
@@ -135,11 +132,11 @@ init _ =
                 , ( Vitality, 0 )
                 , ( Agility, 0 )
                 , ( Intelligence, 0 )
-                , ( Experience, 0 )
                 , ( Luck, 0 )
                 , ( Aura, 0 )
                 , ( Morality, 0 )
                 ]
+                0
                 0
       }
     , Random.generate NewCharacter newStats
@@ -194,7 +191,7 @@ updateCharacterStats character randomList =
         ( statPoints, statList ) =
             splitRandomList randomList
     in
-    { character | stats = updateStats character.stats statList, statPoints = statPoints }
+    { character | stats = updateStats character.stats statList, statPoints = statPoints, experience = 1 }
 
 
 splitRandomList : List Int -> ( Int, List Int )
@@ -228,11 +225,7 @@ setNewStatValue statList index oldStat =
         statType =
             Tuple.first oldStat
     in
-    if statType /= Experience then
-        ( statType, baseStatModifier newValue )
-
-    else
-        ( statType, 1 )
+    ( statType, baseStatModifier newValue )
 
 
 
@@ -296,7 +289,8 @@ characterGeneratorPage model =
                  , el [ Font.size 20, Font.color white ] <| text (classToString model.character.class)
                  ]
                     ++ List.map printStats model.character.stats
-                    ++ [ printStatPoints model.character.statPoints
+                    ++ [ buildStatElement "Stat Points" model.character.statPoints
+                       , buildStatElement "Experience" model.character.experience
                        , backButton
                        , rerollButton
                        ]
@@ -305,16 +299,15 @@ characterGeneratorPage model =
     }
 
 
-printStatPoints : Int -> Element msg
-printStatPoints statPoints =
-    el [ Font.size 20, Font.color white ] <|
-        text ("Stat Points: " ++ String.fromInt statPoints)
-
-
 printStats : ( CharacterStat, Int ) -> Element msg
 printStats ( name, val ) =
+    buildStatElement (characterStatToString name) val
+
+
+buildStatElement : String -> Int -> Element msg
+buildStatElement name val =
     el [ Font.size 20, Font.color white ] <|
-        text (characterStatToString name ++ ": " ++ String.fromInt val)
+        text (name ++ ": " ++ String.fromInt val)
 
 
 rerollButton : Element Msg
