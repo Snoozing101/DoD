@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Array
 import Browser
+import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -106,7 +107,7 @@ classToString class =
 type alias Character =
     { class : CharacterClass
     , name : String
-    , stats : List ( CharacterStat, Int )
+    , stats : Dict String ( CharacterStat, Int )
     , experience : Int
     , statPoints : Int
     }
@@ -128,19 +129,30 @@ init _ =
       , character =
             Character Wanderer
                 "Apathy"
-                [ ( Strength, 0 )
-                , ( Vitality, 0 )
-                , ( Agility, 0 )
-                , ( Intelligence, 0 )
-                , ( Luck, 0 )
-                , ( Aura, 0 )
-                , ( Morality, 0 )
-                ]
+                (Dict.fromList
+                    [ makeStatDictEntry Strength 0
+                    , makeStatDictEntry Vitality 0
+                    , makeStatDictEntry Agility 0
+                    , makeStatDictEntry Intelligence 0
+                    , makeStatDictEntry Luck 0
+                    , makeStatDictEntry Aura 0
+                    , makeStatDictEntry Morality 0
+                    ]
+                )
                 0
                 0
       }
     , Random.generate NewCharacter newStats
     )
+
+
+makeStatDictEntry : CharacterStat -> Int -> ( String, ( CharacterStat, Int ) )
+makeStatDictEntry characterStat val =
+    let
+        statString =
+            characterStatToString characterStat
+    in
+    ( statString, ( characterStat, val ) )
 
 
 
@@ -193,21 +205,20 @@ incrementCharacterStat model characterStat =
             currCharacter.stats
 
         updatedStats =
-            List.map (\x -> incrementStat x characterStat) oldStats
+            Dict.update (characterStatToString characterStat) (Maybe.map incrementStat) oldStats
+
+        updatedClass =
+            updateClass updatedStats
 
         updatedCharacter =
-            { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints - 1 }
+            { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints - 1, class = updatedClass }
     in
     { model | character = updatedCharacter }
 
 
-incrementStat : ( CharacterStat, Int ) -> CharacterStat -> ( CharacterStat, Int )
-incrementStat ( characterStat, val ) matchStat =
-    if characterStat == matchStat then
-        ( characterStat, val + 1 )
-
-    else
-        ( characterStat, val )
+incrementStat : ( CharacterStat, Int ) -> ( CharacterStat, Int )
+incrementStat ( characterStat, num ) =
+    ( characterStat, num + 1 )
 
 
 decrementCharacterStat : Model -> CharacterStat -> Model
@@ -220,21 +231,71 @@ decrementCharacterStat model characterStat =
             currCharacter.stats
 
         updatedStats =
-            List.map (\x -> decrementStat x characterStat) oldStats
+            Dict.update (characterStatToString characterStat) (Maybe.map decrementStat) oldStats
+
+        updatedClass =
+            updateClass updatedStats
 
         updatedCharacter =
-            { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints + 1 }
+            { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints + 1, class = updatedClass }
     in
     { model | character = updatedCharacter }
 
 
-decrementStat : ( CharacterStat, Int ) -> CharacterStat -> ( CharacterStat, Int )
-decrementStat ( characterStat, val ) matchStat =
-    if characterStat == matchStat then
-        ( characterStat, val - 1 )
+decrementStat : ( CharacterStat, Int ) -> ( CharacterStat, Int )
+decrementStat ( characterStat, num ) =
+    ( characterStat, num - 1 )
+
+
+updateClass : Dict String ( CharacterStat, Int ) -> CharacterClass
+updateClass stats =
+    let
+        intelligence =
+            getStatValue stats Intelligence
+
+        morality =
+            getStatValue stats Morality
+
+        aura =
+            getStatValue stats Aura
+
+        strength =
+            getStatValue stats Strength
+
+        vitality =
+            getStatValue stats Vitality
+
+        agility =
+            getStatValue stats Agility
+    in
+    if intelligence > 6 && morality > 7 then
+        Cleric
+
+    else if intelligence > 8 && aura > 7 then
+        Mage
+
+    else if strength > 7 && morality > 5 && (strength + vitality) > 10 then
+        Warrior
+
+    else if strength > 8 && (vitality + agility) > 12 && morality < 6 then
+        Barbarian
 
     else
-        ( characterStat, val )
+        Wanderer
+
+
+getStatValue : Dict String ( CharacterStat, Int ) -> CharacterStat -> Int
+getStatValue stats characterStat =
+    let
+        statEntry =
+            Dict.get (characterStatToString characterStat) stats
+    in
+    case statEntry of
+        Just ( _, val ) ->
+            val
+
+        Nothing ->
+            0
 
 
 optionUpdate : Model -> Page -> Model
@@ -266,16 +327,20 @@ splitRandomList randomList =
             ( 0, [] )
 
 
-updateStats : List ( CharacterStat, Int ) -> List Int -> List ( CharacterStat, Int )
+updateStats : Dict String ( CharacterStat, Int ) -> List Int -> Dict String ( CharacterStat, Int )
 updateStats oldCharacterStats statList =
     let
         updater =
             setNewStatValue statList
+
+        oldCharacterStatList =
+            Dict.toList oldCharacterStats
     in
-    List.indexedMap updater oldCharacterStats
+    List.indexedMap updater oldCharacterStatList
+        |> Dict.fromList
 
 
-setNewStatValue : List Int -> Int -> ( CharacterStat, Int ) -> ( CharacterStat, Int )
+setNewStatValue : List Int -> Int -> ( String, ( CharacterStat, Int ) ) -> ( String, ( CharacterStat, Int ) )
 setNewStatValue statList index oldStat =
     let
         newArray =
@@ -284,10 +349,13 @@ setNewStatValue statList index oldStat =
         newValue =
             Maybe.withDefault 0 (Array.get index newArray)
 
-        statType =
+        statString =
             Tuple.first oldStat
+
+        statType =
+            Tuple.first (Tuple.second oldStat)
     in
-    ( statType, baseStatModifier newValue )
+    ( statString, ( statType, baseStatModifier newValue ) )
 
 
 
@@ -354,7 +422,7 @@ characterGeneratorPage model =
                     text model.character.name
                  , el [ Font.size 20, Font.color white ] <| text (classToString model.character.class)
                  ]
-                    ++ List.map (printStats currCharacter.statPoints) currCharacter.stats
+                    ++ List.map (printStats currCharacter.statPoints) (Dict.toList currCharacter.stats)
                     ++ [ buildStatElement "Stat Points" currCharacter.statPoints
                        , buildStatElement "Experience" currCharacter.experience
                        , backButton
@@ -365,10 +433,10 @@ characterGeneratorPage model =
     }
 
 
-printStats : Int -> ( CharacterStat, Int ) -> Element Msg
-printStats statPoints ( characterStat, val ) =
+printStats : Int -> ( String, ( CharacterStat, Int ) ) -> Element Msg
+printStats statPoints ( statString, ( characterStat, val ) ) =
     row []
-        [ buildStatElement (characterStatToString characterStat) val
+        [ buildStatElement statString val
         , adjustButtons statPoints characterStat val
         ]
 
@@ -378,6 +446,7 @@ adjustButtons statPoints characterStat statValue =
     let
         incrementMessage =
             processIncrement statPoints characterStat
+
         decrementMessage =
             processDecrement statValue characterStat
     in
@@ -404,10 +473,12 @@ adjustButtons statPoints characterStat statValue =
             }
         ]
 
+
 processIncrement : Int -> CharacterStat -> Maybe Msg
 processIncrement statPoints characterStat =
     if statPoints > 0 then
         Just (IncrementStat characterStat)
+
     else
         Nothing
 
@@ -416,8 +487,10 @@ processDecrement : Int -> CharacterStat -> Maybe Msg
 processDecrement statValue characterStat =
     if statValue > 0 then
         Just (DecrementStat characterStat)
+
     else
         Nothing
+
 
 buildStatElement : String -> Int -> Element msg
 buildStatElement name val =
