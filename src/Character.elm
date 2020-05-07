@@ -1,12 +1,16 @@
-module Character exposing (Character
-                          , CharacterStat
-                          , decrementCharacterStat
-                          , incrementCharacterStat
-                          , newCharacter
-                          , updateCharacterStats
-                          , statsToList
-                          , classToString
-                          )
+module Character exposing
+    ( Character
+    , CharacterStat
+    , getClassString
+    , getName
+    , getStatList
+    , getStatPoints
+    , getXP
+    , incrementCharacterStat
+    , decrementCharacterStat
+    , newCharacter
+    , updateCharacterStats
+    )
 
 import Array
 import Dict exposing (Dict)
@@ -74,31 +78,34 @@ classToString class =
             "Barbarian"
 
 
-type alias Character =
-    { class : CharacterClass
-    , name : String
-    , stats : Dict String ( CharacterStat, Int )
-    , experience : Int
-    , statPoints : Int
-    }
+type Character
+    = Character
+        { class : CharacterClass
+        , name : String
+        , stats : Dict String ( CharacterStat, Int )
+        , experience : Int
+        , statPoints : Int
+        }
 
 
 newCharacter : Character
 newCharacter =
-    Character Wanderer
-        "Apathy"
-        (Dict.fromList
-            [ makeStatDictEntry Strength 0
-            , makeStatDictEntry Vitality 0
-            , makeStatDictEntry Agility 0
-            , makeStatDictEntry Intelligence 0
-            , makeStatDictEntry Luck 0
-            , makeStatDictEntry Aura 0
-            , makeStatDictEntry Morality 0
-            ]
-        )
-        0
-        0
+    Character
+        { class = Wanderer
+        , name = "Apathy"
+        , stats =
+            Dict.fromList
+                [ makeStatDictEntry Strength 0
+                , makeStatDictEntry Vitality 0
+                , makeStatDictEntry Agility 0
+                , makeStatDictEntry Intelligence 0
+                , makeStatDictEntry Luck 0
+                , makeStatDictEntry Aura 0
+                , makeStatDictEntry Morality 0
+                ]
+        , experience = 0
+        , statPoints = 0
+        }
 
 
 makeStatDictEntry : CharacterStat -> Int -> ( String, ( CharacterStat, Int ) )
@@ -116,7 +123,7 @@ baseStatModifier stat =
 
 
 incrementCharacterStat : Character -> CharacterStat -> Character
-incrementCharacterStat character characterStat =
+incrementCharacterStat (Character character) characterStat =
     let
         currCharacter =
             character
@@ -130,7 +137,7 @@ incrementCharacterStat character characterStat =
         updatedClass =
             updateClass updatedStats
     in
-    { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints - 1, class = updatedClass }
+    Character { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints - 1, class = updatedClass }
 
 
 incrementStat : ( CharacterStat, Int ) -> ( CharacterStat, Int )
@@ -139,7 +146,7 @@ incrementStat ( characterStat, num ) =
 
 
 decrementCharacterStat : Character -> CharacterStat -> Character
-decrementCharacterStat character characterStat =
+decrementCharacterStat (Character character) characterStat =
     let
         currCharacter =
             character
@@ -153,7 +160,7 @@ decrementCharacterStat character characterStat =
         updatedClass =
             updateClass updatedStats
     in
-    { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints + 1, class = updatedClass }
+    Character { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints + 1, class = updatedClass }
 
 
 decrementStat : ( CharacterStat, Int ) -> ( CharacterStat, Int )
@@ -213,12 +220,12 @@ getStatValue stats characterStat =
 
 
 updateCharacterStats : Character -> List Int -> Character
-updateCharacterStats character randomList =
+updateCharacterStats (Character character) randomList =
     let
         ( statPoints, statList ) =
             splitRandomList randomList
     in
-    { character | stats = updateStats character.stats statList, statPoints = statPoints, experience = 1 }
+    Character { character | stats = updateStats character.stats statList, statPoints = statPoints, experience = 1 }
 
 
 splitRandomList : List Int -> ( Int, List Int )
@@ -261,6 +268,31 @@ setNewStatValue statList index oldStat =
     in
     ( statString, ( statType, baseStatModifier newValue ) )
 
-statsToList : Dict String ( CharacterStat, Int) -> List (String, (CharacterStat, Int))
-statsToList stats =
-    Dict.toList stats
+
+-- Getters & Setters
+
+
+getName : Character -> String
+getName (Character character) =
+    character.name
+
+
+getClassString : Character -> String
+getClassString (Character character) =
+    classToString character.class
+
+
+getStatPoints : Character -> Int
+getStatPoints (Character character) =
+    character.statPoints
+
+
+getStatList : Character -> List ( String, ( CharacterStat, Int ) )
+getStatList (Character character) =
+    Dict.toList character.stats
+
+
+getXP : Character -> Int
+getXP (Character character) =
+    character.experience
+

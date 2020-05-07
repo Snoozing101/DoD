@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Character exposing (Character, newCharacter)
+import Character exposing (Character)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -131,9 +131,31 @@ menuPage =
     , body =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
-                [ column [ centerX, Border.width 4, Border.color white ]
-                    [ el [ paddingXY 100 10, Font.color green, Font.size 40 ] <| text "Dungeon of Doom"
-                    , column [ width fill, Font.color white, paddingXY 40 10, Border.widthEach { top = 4, left = 0, right = 0, bottom = 0 }, Border.color white, spacing 5 ]
+                [ column
+                    [ centerX
+                    , Border.width 4
+                    , Border.color white
+                    ]
+                    [ el
+                        [ paddingXY 100 10
+                        , Font.color green
+                        , Font.size 40
+                        ]
+                      <|
+                        text "Dungeon of Doom"
+                    , column
+                        [ width fill
+                        , Font.color white
+                        , paddingXY 40 10
+                        , Border.widthEach
+                            { top = 4
+                            , left = 0
+                            , right = 0
+                            , bottom = 0
+                            }
+                        , Border.color white
+                        , spacing 5
+                        ]
                         (List.map buildList options)
                     ]
                 ]
@@ -162,12 +184,12 @@ characterGeneratorPage character =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
                 ([ el [ Font.size 40, Font.color white ] <|
-                    text character.name
-                 , el [ Font.size 20, Font.color white ] <| text (Character.classToString character.class)
+                    text (Character.getName character)
+                 , el [ Font.size 20, Font.color white ] <| text (Character.getClassString character)
                  ]
-                    ++ List.map (printStats character.statPoints) (Character.statsToList character.stats)
-                    ++ [ buildStatElement "Stat Points" character.statPoints
-                       , buildStatElement "Experience" character.experience
+                    ++ List.map (printStats (Character.getStatPoints character)) (Character.getStatList character)
+                    ++ [ buildStatElement "Stat Points" (Character.getStatPoints character)
+                       , buildStatElement "Experience" (Character.getXP character)
                        , backButton
                        , rerollButton
                        ]
