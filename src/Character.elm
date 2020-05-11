@@ -6,6 +6,7 @@ module Character exposing
     , getStatList
     , getStatPoints
     , getXP
+    , setName
     , incrementCharacterStat
     , decrementCharacterStat
     , newCharacter
@@ -81,14 +82,14 @@ classToString class =
 type Character
     = Character
         { class : CharacterClass
-        , name : String
+        , name : Maybe String
         , stats : Dict String ( CharacterStat, Int )
         , experience : Int
         , statPoints : Int
         }
 
 
-newCharacter : String -> Character
+newCharacter : Maybe String -> Character
 newCharacter characterName =
     Character
         { class = Wanderer
@@ -272,9 +273,14 @@ setNewStatValue statList index oldStat =
 -- Getters & Setters
 
 
-getName : Character -> String
+getName : Character -> Maybe String
 getName (Character character) =
     character.name
+
+
+setName : Character -> String -> Character
+setName (Character character) newName =
+    Character { character | name = Just newName }
 
 
 getClassString : Character -> String

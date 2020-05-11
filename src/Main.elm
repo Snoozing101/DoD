@@ -49,7 +49,7 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { currPage = MenuPage
-      , character = Character.newCharacter "Apathy"
+      , character = Character.newCharacter Nothing
       }
     , Random.generate NewCharacter newStats
     )
@@ -74,6 +74,7 @@ type Msg
     | ReRollCharacter
     | IncrementStat Character.CharacterStat
     | DecrementStat Character.CharacterStat
+    | UpdateName String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -93,6 +94,9 @@ update msg model =
 
         DecrementStat characterStat ->
             ( { model | character = Character.decrementCharacterStat model.character characterStat }, Cmd.none )
+
+        UpdateName newName ->
+            ( { model | character = Character.setName model.character newName }, Cmd.none )
 
 
 optionUpdate : Model -> Page -> Model
@@ -183,8 +187,12 @@ characterGeneratorPage character =
     , body =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
-                ([ el [ Font.size 40, Font.color white ] <|
-                    text (Character.getName character)
+                ([ Input.text [ Font.size 20, Font.color black, width (fill |> minimum 300 |> maximum 300) ]
+                    { onChange = UpdateName
+                    , text = Maybe.withDefault "" (Character.getName character)
+                    , placeholder = Just (Input.placeholder [ Font.size 20, Font.color black ] <| text "Enter character name")
+                    , label = Input.labelLeft [ Font.size 20, Font.color white ] <| text "Name: "
+                    }
                  , el [ Font.size 20, Font.color white ] <| text (Character.getClassString character)
                  ]
                     ++ List.map (printStats (Character.getStatPoints character)) (Character.getStatList character)
