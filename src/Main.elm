@@ -49,7 +49,7 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { currPage = MenuPage
-      , character = Character.newCharacter
+      , character = Character.newCharacter "Apathy"
       }
     , Random.generate NewCharacter newStats
     )

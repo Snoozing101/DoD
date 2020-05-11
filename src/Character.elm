@@ -88,11 +88,11 @@ type Character
         }
 
 
-newCharacter : Character
-newCharacter =
+newCharacter : String -> Character
+newCharacter characterName =
     Character
         { class = Wanderer
-        , name = "Apathy"
+        , name = characterName
         , stats =
             Dict.fromList
                 [ makeStatDictEntry Strength 0
