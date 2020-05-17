@@ -14,45 +14,25 @@ all =
     describe "Test character functions"
         [ test "Create a character with a known name" <|
             \_ ->
-                let
-                    testName =
-                        "Frodo"
-
-                    character =
-                        Character.init (Just testName)
-                in
-                Expect.equal (Character.getName character) (Just testName)
+                Expect.equal (Character.getName buildBaseCharacter) (Just getTestName)
         , test "Initial class should be Wanderer" <|
             \_ ->
-                let
-                    character =
-                        Character.init (Just "Frodo")
-                in
-                Expect.equal (Character.getClassString character) "Wanderer"
+                Expect.equal (Character.getClassString buildBaseCharacter) "Wanderer"
         , test "There should be 7 stats" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
                     statList =
-                        Character.getStatList character
+                        Character.getStatList buildBaseCharacter
                 in
                 Expect.equal (List.length statList) 7
         , test "Can update the stat values" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 3, 6, 2, 5, 1, 8, 2, 5 ]
-
                     newStats =
-                        Maybe.withDefault [] (List.tail randomValues)
+                        Maybe.withDefault [] (List.tail getRandomValues)
 
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getRandomValues
 
                     updatedStats =
                         Character.getStatList newCharacter
@@ -62,33 +42,21 @@ all =
         , test "Are stat points set correctly" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 3, 6, 2, 5, 1, 8, 2, 5 ]
-
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getRandomValues
                 in
                 Expect.equal (Character.getStatPoints newCharacter) 6
         , test "Decrement stats correctly" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 3, 6, 2, 5, 1, 8, 2, 5 ]
-
                     matchValues =
-                        randomValues
+                        getRandomValues
                             |> List.tail
                             |> Maybe.withDefault []
                             |> List.map (\x -> x + 1)
 
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getRandomValues
 
                     decrementStats =
                         Character.getStatList newCharacter
@@ -103,20 +71,14 @@ all =
         , test "Increment stats correctly" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 3, 6, 2, 5, 1, 8, 2, 5 ]
-
                     matchValues =
-                        randomValues
+                        getRandomValues
                             |> List.tail
                             |> Maybe.withDefault []
                             |> List.map (\x -> x + 3)
 
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getRandomValues
 
                     incrementStats =
                         Character.getStatList newCharacter
@@ -131,14 +93,8 @@ all =
         , test "Test Cleric rules" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 3, 6, 6, 6, 6, 6, 6, 6 ]
-
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getFixedValues
 
                     clericCharacter =
                         newCharacter
@@ -150,14 +106,8 @@ all =
         , test "Test Mage rules" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 2, 4, 4, 4, 4, 4, 4, 4 ]
-
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getFixedValues
 
                     mageCharacter =
                         newCharacter
@@ -171,14 +121,8 @@ all =
         , test "Test Warrior rules" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 2, 4, 4, 4, 4, 4, 4, 4 ]
-
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getFixedValues
 
                     warriorCharacter =
                         newCharacter
@@ -189,14 +133,8 @@ all =
         , test "Test Barbarian rules" <|
             \_ ->
                 let
-                    character =
-                        Character.init (Just "Frodo")
-
-                    randomValues =
-                        [ 2, 4, 4, 4, 4, 4, 4, 4 ]
-
                     newCharacter =
-                        Character.updateCharacterStats character randomValues
+                        Character.updateCharacterStats buildBaseCharacter getFixedValues
 
                     barbarianCharacter =
                         newCharacter
@@ -208,3 +146,27 @@ all =
                 in
                 Expect.equal (Character.getClassString barbarianCharacter) "Barbarian"
         ]
+
+
+
+-- Helper functions
+
+
+getFixedValues : List Int
+getFixedValues =
+    [ 3, 4, 4, 4, 4, 4, 4, 4 ]
+
+
+getRandomValues : List Int
+getRandomValues =
+    [ 3, 6, 2, 5, 1, 8, 2, 5 ]
+
+
+getTestName : String
+getTestName =
+    "Frodo"
+
+
+buildBaseCharacter : Character.Character
+buildBaseCharacter =
+    Character.init (Just getTestName)
