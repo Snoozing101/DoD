@@ -49,7 +49,7 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { currPage = MenuPage
-      , character = Character.newCharacter Nothing
+      , character = Character.init Nothing
       }
     , Random.generate NewCharacter newStats
     )
@@ -90,10 +90,10 @@ update msg model =
             ( model, Random.generate NewCharacter newStats )
 
         IncrementStat characterStat ->
-            ( { model | character = Character.incrementCharacterStat model.character characterStat }, Cmd.none )
+            ( { model | character = Character.incrementCharacterStat characterStat model.character }, Cmd.none )
 
         DecrementStat characterStat ->
-            ( { model | character = Character.decrementCharacterStat model.character characterStat }, Cmd.none )
+            ( { model | character = Character.decrementCharacterStat characterStat model.character }, Cmd.none )
 
         UpdateName newName ->
             ( { model | character = Character.setName model.character newName }, Cmd.none )
@@ -206,11 +206,11 @@ characterGeneratorPage character =
     }
 
 
-printStats : Int -> ( String, ( Character.CharacterStat, Int ) ) -> Element Msg
-printStats statPoints ( statString, ( characterStat, val ) ) =
+printStats : Int -> Character.Stat -> Element Msg
+printStats statPoints { name, stat, value } = 
     row []
-        [ buildStatElement statString val
-        , adjustButtons statPoints characterStat val
+        [ buildStatElement name value
+        , adjustButtons statPoints stat value
         ]
 
 

@@ -1,20 +1,29 @@
 module Character exposing
     ( Character
-    , CharacterStat
+    , CharacterStat(..)
+    , CharacterClass(..)
+    , Stat
+    , decrementCharacterStat
     , getClassString
     , getName
     , getStatList
     , getStatPoints
     , getXP
-    , setName
     , incrementCharacterStat
-    , decrementCharacterStat
-    , newCharacter
+    , init
+    , setName
     , updateCharacterStats
     )
 
 import Array
 import Dict exposing (Dict)
+
+
+type alias Stat =
+    { name : String
+    , stat : CharacterStat
+    , value : Int
+    }
 
 
 type CharacterStat
@@ -89,8 +98,8 @@ type Character
         }
 
 
-newCharacter : Maybe String -> Character
-newCharacter characterName =
+init : Maybe String -> Character
+init characterName =
     Character
         { class = Wanderer
         , name = characterName
@@ -123,8 +132,13 @@ baseStatModifier stat =
     stat + 2
 
 
-incrementCharacterStat : Character -> CharacterStat -> Character
-incrementCharacterStat (Character character) characterStat =
+baseStatPointModifier : Int -> Int
+baseStatPointModifier points =
+    points + 3
+
+
+incrementCharacterStat : CharacterStat -> Character -> Character
+incrementCharacterStat characterStat (Character character) =
     let
         currCharacter =
             character
@@ -146,8 +160,8 @@ incrementStat ( characterStat, num ) =
     ( characterStat, num + 1 )
 
 
-decrementCharacterStat : Character -> CharacterStat -> Character
-decrementCharacterStat (Character character) characterStat =
+decrementCharacterStat : CharacterStat -> Character -> Character
+decrementCharacterStat characterStat (Character character) =
     let
         currCharacter =
             character
@@ -223,8 +237,11 @@ getStatValue stats characterStat =
 updateCharacterStats : Character -> List Int -> Character
 updateCharacterStats (Character character) randomList =
     let
-        ( statPoints, statList ) =
+        ( baseStatPoints, statList ) =
             splitRandomList randomList
+
+        statPoints =
+            baseStatPointModifier baseStatPoints
     in
     Character { character | stats = updateStats character.stats statList, statPoints = statPoints, experience = 1 }
 
@@ -270,6 +287,7 @@ setNewStatValue statList index oldStat =
     ( statString, ( statType, baseStatModifier newValue ) )
 
 
+
 -- Getters & Setters
 
 
@@ -293,12 +311,17 @@ getStatPoints (Character character) =
     character.statPoints
 
 
-getStatList : Character -> List ( String, ( CharacterStat, Int ) )
+getStatList : Character -> List Stat
 getStatList (Character character) =
     Dict.toList character.stats
+        |> List.map getStatRecord
+
+
+getStatRecord : ( String, ( CharacterStat, Int ) ) -> Stat
+getStatRecord ( statName, ( stat, val ) ) =
+    { name = statName, stat = stat, value = val }
 
 
 getXP : Character -> Int
 getXP (Character character) =
     character.experience
-
