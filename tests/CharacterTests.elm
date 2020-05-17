@@ -1,4 +1,4 @@
-module Tests exposing (..)
+module CharacterTests exposing (..)
 
 import Character exposing (CharacterClass(..), CharacterStat(..))
 import Expect
