@@ -15,3 +15,6 @@ node_modules
 
 # Ignore Ctags generated tags file
 tags
+
+# Ignore the stuff in basic
+basic
