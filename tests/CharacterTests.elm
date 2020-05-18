@@ -28,17 +28,21 @@ all =
         , test "Can update the stat values" <|
             \_ ->
                 let
-                    newStats =
-                        Maybe.withDefault [] (List.tail getRandomValues)
+                    expectedStats =
+                        getAscendingValues
+                        |> List.tail
+                        |> Maybe.withDefault []
+                        |> List.map (\x -> x + 2)
 
                     newCharacter =
-                        Character.updateCharacterStats buildBaseCharacter getRandomValues
+                        Character.updateCharacterStats buildBaseCharacter getAscendingValues
 
                     updatedStats =
                         Character.getStatList newCharacter
                             |> List.map (\statRecord -> statRecord.value)
+                            |> List.sort
                 in
-                Expect.equal (List.map (\x -> x + 2) newStats) updatedStats
+                Expect.equal expectedStats updatedStats
         , test "Are stat points set correctly" <|
             \_ ->
                 let
@@ -49,47 +53,47 @@ all =
         , test "Decrement stats correctly" <|
             \_ ->
                 let
-                    matchValues =
-                        getRandomValues
-                            |> List.tail
-                            |> Maybe.withDefault []
-                            |> List.map (\x -> x + 1)
-
                     newCharacter =
-                        Character.updateCharacterStats buildBaseCharacter getRandomValues
+                        Character.updateCharacterStats buildBaseCharacter getFixedValues
 
                     decrementStats =
-                        Character.getStatList newCharacter
-                            |> List.map (\statRecord -> statRecord.stat)
-                            |> List.foldl (\stat char -> Character.decrementCharacterStat stat char) newCharacter
+                        Character.decrementCharacterStat Strength newCharacter
+
+                    defaultStat =
+                        Character.Stat "Strength" Strength 0
 
                     updatedStats =
                         Character.getStatList decrementStats
-                            |> List.map (\statRecord -> statRecord.value)
+                            |> List.filter (\x -> x.stat == Strength)
+                            |> List.head
+                            |> Maybe.withDefault defaultStat
+
+                    matchValue =
+                        Character.Stat "Strength" Strength 5
                 in
-                Expect.equal updatedStats matchValues
+                Expect.equal updatedStats matchValue
         , test "Increment stats correctly" <|
             \_ ->
                 let
-                    matchValues =
-                        getRandomValues
-                            |> List.tail
-                            |> Maybe.withDefault []
-                            |> List.map (\x -> x + 3)
-
                     newCharacter =
-                        Character.updateCharacterStats buildBaseCharacter getRandomValues
+                        Character.updateCharacterStats buildBaseCharacter getFixedValues
 
                     incrementStats =
-                        Character.getStatList newCharacter
-                            |> List.map (\statRecord -> statRecord.stat)
-                            |> List.foldl (\stat char -> Character.incrementCharacterStat stat char) newCharacter
+                        Character.incrementCharacterStat Strength newCharacter
+
+                    defaultStat =
+                        Character.Stat "Strength" Strength 0
 
                     updatedStats =
                         Character.getStatList incrementStats
-                            |> List.map (\statRecord -> statRecord.value)
+                            |> List.filter (\x -> x.stat == Strength)
+                            |> List.head
+                            |> Maybe.withDefault defaultStat
+
+                    matchValue =
+                        Character.Stat "Strength" Strength 7
                 in
-                Expect.equal updatedStats matchValues
+                Expect.equal updatedStats matchValue
         , test "Test Cleric rules" <|
             \_ ->
                 let
@@ -145,6 +149,20 @@ all =
                             |> Character.incrementCharacterStat Agility
                 in
                 Expect.equal (Character.getClassString barbarianCharacter) "Barbarian"
+        , test "Stat order returned matches original" <|
+            \_ ->
+                let
+                    newCharacter =
+                        Character.updateCharacterStats buildBaseCharacter getFixedValues
+
+                    statStrings =
+                        Character.getStatList newCharacter
+                            |> List.map (\x -> x.name)
+
+                    expectedOrder =
+                        [ "Strength", "Vitality", "Agility", "Intelligence", "Luck", "Aura", "Morality" ]
+                in
+                Expect.equal statStrings expectedOrder
         ]
 
 
@@ -160,6 +178,11 @@ getFixedValues =
 getRandomValues : List Int
 getRandomValues =
     [ 3, 6, 2, 5, 1, 8, 2, 5 ]
+
+
+getAscendingValues : List Int
+getAscendingValues =
+    [ 0, 1, 2, 3, 4, 5, 6, 7 ]
 
 
 getTestName : String

@@ -25,6 +25,11 @@ type alias Stat =
     , value : Int
     }
 
+type alias StatHolder =
+    { stat : CharacterStat
+    , value : Int
+    , order : Int
+    }
 
 type CharacterStat
     = Strength
@@ -92,7 +97,7 @@ type Character
     = Character
         { class : CharacterClass
         , name : Maybe String
-        , stats : Dict String ( CharacterStat, Int )
+        , stats : Dict String StatHolder
         , experience : Int
         , statPoints : Int
         }
@@ -105,26 +110,26 @@ init characterName =
         , name = characterName
         , stats =
             Dict.fromList
-                [ makeStatDictEntry Strength 0
-                , makeStatDictEntry Vitality 0
-                , makeStatDictEntry Agility 0
-                , makeStatDictEntry Intelligence 0
-                , makeStatDictEntry Luck 0
-                , makeStatDictEntry Aura 0
-                , makeStatDictEntry Morality 0
+                [ makeStatDictEntry Strength 0 0
+                , makeStatDictEntry Vitality 0 1
+                , makeStatDictEntry Agility 0 2
+                , makeStatDictEntry Intelligence 0 3
+                , makeStatDictEntry Luck 0 4
+                , makeStatDictEntry Aura 0 5
+                , makeStatDictEntry Morality 0 6
                 ]
         , experience = 0
         , statPoints = 0
         }
 
 
-makeStatDictEntry : CharacterStat -> Int -> ( String, ( CharacterStat, Int ) )
-makeStatDictEntry characterStat val =
+makeStatDictEntry : CharacterStat -> Int -> Int -> ( String, StatHolder )
+makeStatDictEntry stat value order =
     let
         statString =
-            characterStatToString characterStat
+            characterStatToString stat
     in
-    ( statString, ( characterStat, val ) )
+    ( statString, { stat=stat, value=value, order=order } )
 
 
 baseStatModifier : Int -> Int
@@ -155,9 +160,9 @@ incrementCharacterStat characterStat (Character character) =
     Character { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints - 1, class = updatedClass }
 
 
-incrementStat : ( CharacterStat, Int ) -> ( CharacterStat, Int )
-incrementStat ( characterStat, num ) =
-    ( characterStat, num + 1 )
+incrementStat : StatHolder -> StatHolder
+incrementStat statHolder =
+    { statHolder | value = statHolder.value + 1 }
 
 
 decrementCharacterStat : CharacterStat -> Character -> Character
@@ -178,12 +183,12 @@ decrementCharacterStat characterStat (Character character) =
     Character { currCharacter | stats = updatedStats, statPoints = currCharacter.statPoints + 1, class = updatedClass }
 
 
-decrementStat : ( CharacterStat, Int ) -> ( CharacterStat, Int )
-decrementStat ( characterStat, num ) =
-    ( characterStat, num - 1 )
+decrementStat : StatHolder -> StatHolder
+decrementStat statHolder =
+    { statHolder | value = statHolder.value-1 }
 
 
-updateClass : Dict String ( CharacterStat, Int ) -> CharacterClass
+updateClass : Dict String StatHolder -> CharacterClass
 updateClass stats =
     let
         intelligence =
@@ -220,15 +225,15 @@ updateClass stats =
         Wanderer
 
 
-getStatValue : Dict String ( CharacterStat, Int ) -> CharacterStat -> Int
+getStatValue : Dict String StatHolder -> CharacterStat -> Int
 getStatValue stats characterStat =
     let
         statEntry =
             Dict.get (characterStatToString characterStat) stats
     in
     case statEntry of
-        Just ( _, val ) ->
-            val
+        Just statHolder ->
+            statHolder.value
 
         Nothing ->
             0
@@ -256,7 +261,7 @@ splitRandomList randomList =
             ( 0, [] )
 
 
-updateStats : Dict String ( CharacterStat, Int ) -> List Int -> Dict String ( CharacterStat, Int )
+updateStats : Dict String StatHolder -> List Int -> Dict String StatHolder
 updateStats oldCharacterStats statList =
     let
         updater =
@@ -269,7 +274,7 @@ updateStats oldCharacterStats statList =
         |> Dict.fromList
 
 
-setNewStatValue : List Int -> Int -> ( String, ( CharacterStat, Int ) ) -> ( String, ( CharacterStat, Int ) )
+setNewStatValue : List Int -> Int -> ( String, StatHolder ) -> ( String, StatHolder )
 setNewStatValue statList index oldStat =
     let
         newArray =
@@ -281,10 +286,10 @@ setNewStatValue statList index oldStat =
         statString =
             Tuple.first oldStat
 
-        statType =
-            Tuple.first (Tuple.second oldStat)
+        statHolder =
+            Tuple.second oldStat
     in
-    ( statString, ( statType, baseStatModifier newValue ) )
+    ( statString, { statHolder | value = baseStatModifier newValue } )
 
 
 
@@ -314,12 +319,13 @@ getStatPoints (Character character) =
 getStatList : Character -> List Stat
 getStatList (Character character) =
     Dict.toList character.stats
+        |> List.sortWith (\a b -> compare (Tuple.second a).order (Tuple.second b).order)
         |> List.map getStatRecord
 
 
-getStatRecord : ( String, ( CharacterStat, Int ) ) -> Stat
-getStatRecord ( statName, ( stat, val ) ) =
-    { name = statName, stat = stat, value = val }
+getStatRecord : ( String, StatHolder ) -> Stat
+getStatRecord ( statName, statHolder ) =
+    { name = statName, stat = statHolder.stat, value = statHolder.value }
 
 
 getXP : Character -> Int
