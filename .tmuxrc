@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Session name
+SESSION="elm-dod"
+
+# Only create tmux session if it doesn't already exist
+if [ "$SESSIONEXISTS" = "" ]
+then
+    # Start the new session with our name
+    tmux new-session -d -s $SESSION
+
+    # Name first Window and start nvim
+    tmux rename-window -t 0 'NeoVim'
+    tmux send-keys -t 'NeoVim' "nvim" C-m
+
+    # Create and setup pane for elm server
+    tmux new-window -t $SESSION:1 -n 'Elm Server'
+    tmux send-keys -t 'Elm Server' 'elm-app start' C-m
+
+    # setup test window
+    tmux new-window -t $SESSION:2 -n 'Tests'
+    tmux send-keys -t 'Tests' "elm-app test --watch" C-m
+
+    # Setup scratch shell
+    tmux new-window -t $SESSION:3 -n 'Scratch'
+    # tmux send-keys -t 'Scratch' "zsh" C-m 'clear' C-m
+fi
+
+# Attach Session, on the Main window
+tmux attach-session -t $SESSION:0
+
