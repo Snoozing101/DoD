@@ -107,7 +107,7 @@ all =
                             |> Character.incrementCharacterStat Morality
                 in
                 Expect.equal (Character.getClassString clericCharacter) "Cleric"
-        , test "Test Mage rules" <|
+        , test "Test Magician rules" <|
             \_ ->
                 let
                     newCharacter =
@@ -121,7 +121,7 @@ all =
                             |> Character.incrementCharacterStat Aura
                             |> Character.incrementCharacterStat Aura
                 in
-                Expect.equal (Character.getClassString mageCharacter) "Mage"
+                Expect.equal (Character.getClassString mageCharacter) "Magician"
         , test "Test Warrior rules" <|
             \_ ->
                 let

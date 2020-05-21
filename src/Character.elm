@@ -5,6 +5,7 @@ module Character exposing
     , Stat
     , decrementCharacterStat
     , getClassString
+    , getClass
     , getName
     , getStatList
     , getStatPoints
@@ -69,7 +70,7 @@ characterStatToString stat =
 type CharacterClass
     = Wanderer
     | Cleric
-    | Mage
+    | Magician
     | Warrior
     | Barbarian
 
@@ -83,8 +84,8 @@ classToString class =
         Cleric ->
             "Cleric"
 
-        Mage ->
-            "Mage"
+        Magician ->
+            "Magician"
 
         Warrior ->
             "Warrior"
@@ -213,7 +214,7 @@ updateClass stats =
         Cleric
 
     else if intelligence > 8 && aura > 7 then
-        Mage
+        Magician
 
     else if strength > 7 && morality > 5 && (strength + vitality) > 10 then
         Warrior
@@ -309,6 +310,10 @@ setName (Character character) newName =
 getClassString : Character -> String
 getClassString (Character character) =
     classToString character.class
+
+getClass : Character -> CharacterClass
+getClass (Character character) =
+    character.class
 
 
 getStatPoints : Character -> Int
