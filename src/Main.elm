@@ -8,6 +8,7 @@ import Element.Border as Border
 import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
+import Equipment exposing (Equipment, EquipmentCategory(..), equipmentCategorytoSting, equipmentList)
 import Random
 
 
@@ -34,6 +35,7 @@ type Page
     | DungeonGenerator
     | CharacterGenerator
     | TheGame
+    | ShopPage
 
 
 type alias Model =
@@ -128,6 +130,9 @@ view model =
         TheGame ->
             holdingPage "The Game"
 
+        ShopPage ->
+            shopPage model.character
+
 
 menuPage : Browser.Document Msg
 menuPage =
@@ -181,6 +186,65 @@ holdingPage pageName =
     }
 
 
+shopPage : Character -> Browser.Document Msg
+shopPage character =
+    { title = "Dungeon of Doom - Shop"
+    , body =
+        [ layout [ Background.color black ] <|
+            column [ width fill, paddingXY 0 100 ]
+                (printArmouryItems character)
+        ]
+    }
+
+
+printArmouryItems : Character -> List (Element Msg)
+printArmouryItems character =
+    let
+        classEquipmentList =
+            equipmentList
+            |> List.filter (\x -> List.member (Character.getClass character) x.usableBy)
+        printClassShop =
+            printShopCategory classEquipmentList
+    in
+    printClassShop Armoury 
+        ++ printClassShop Accoutrements
+        ++ printClassShop Emporium
+
+
+printShopCategory : List Equipment -> EquipmentCategory -> List (Element Msg)
+printShopCategory classEquipmentList category =
+    [ el [ Font.size 20, Font.color white ] <| text (equipmentCategorytoSting category)
+    , row [ paddingXY 50 10 ]
+        [ column []
+            (classEquipmentList
+                |> List.filter (\x -> x.category == category)
+                |> buildEquipmentTable
+            )
+        ]
+    ]
+
+
+buildEquipmentTable : List Equipment -> List (Element Msg)
+buildEquipmentTable categoryList =
+    [ table [ Font.size 20, Font.color white, spacingXY 20 0 ]
+        { data = categoryList
+        , columns =
+            [ { header = el [ Font.alignLeft, Font.color green ] <| text "Item"
+              , width = fill
+              , view =
+                    \item ->
+                        el [ Font.alignLeft ] <| text item.description
+              }
+            , { header = el [ Font.color green ] <| text "Price"
+              , width = fill
+              , view =
+                    \item ->
+                        el [ Font.alignRight ] <| text (String.fromInt item.price)
+              }
+            ]
+        }
+        ]
+
 characterGeneratorPage : Character -> Browser.Document Msg
 characterGeneratorPage character =
     { title = "Dungeon of Doom - Character Generator"
@@ -200,6 +264,7 @@ characterGeneratorPage character =
                        , buildStatElement "Experience" (Character.getXP character)
                        , backButton
                        , rerollButton
+                       , shopButton
                        ]
                 )
         ]
@@ -207,7 +272,7 @@ characterGeneratorPage character =
 
 
 printStats : Int -> Character.Stat -> Element Msg
-printStats statPoints { name, stat, value } = 
+printStats statPoints { name, stat, value } =
     row []
         [ buildStatElement name value
         , adjustButtons statPoints stat value
@@ -292,6 +357,18 @@ backButton =
         ]
         { onPress = Just (OptionSelected MenuPage)
         , label = text "Main Menu"
+        }
+
+
+shopButton : Element Msg
+shopButton =
+    Input.button
+        [ Background.color blue
+        , Element.focused
+            [ Background.color blue ]
+        ]
+        { onPress = Just (OptionSelected ShopPage)
+        , label = text "Shop"
         }
 
 
