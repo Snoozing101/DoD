@@ -1,11 +1,12 @@
 module Character exposing
     ( Character
-    , CharacterStat(..)
     , CharacterClass(..)
+    , CharacterStat(..)
     , Stat
     , decrementCharacterStat
-    , getClassString
     , getClass
+    , getClassString
+    , getGold
     , getName
     , getStatList
     , getStatPoints
@@ -14,6 +15,7 @@ module Character exposing
     , init
     , setName
     , updateCharacterStats
+    , updateGold
     )
 
 import Array
@@ -26,11 +28,13 @@ type alias Stat =
     , value : Int
     }
 
+
 type alias StatHolder =
     { stat : CharacterStat
     , value : Int
     , order : Int
     }
+
 
 type CharacterStat
     = Strength
@@ -101,6 +105,7 @@ type Character
         , stats : Dict String StatHolder
         , experience : Int
         , statPoints : Int
+        , gold : Int
         }
 
 
@@ -121,6 +126,7 @@ init characterName =
                 ]
         , experience = 0
         , statPoints = 0
+        , gold = 0
         }
 
 
@@ -130,7 +136,7 @@ makeStatDictEntry stat value order =
         statString =
             characterStatToString stat
     in
-    ( statString, { stat=stat, value=value, order=order } )
+    ( statString, { stat = stat, value = value, order = order } )
 
 
 baseStatModifier : Int -> Int
@@ -141,6 +147,11 @@ baseStatModifier stat =
 baseStatPointModifier : Int -> Int
 baseStatPointModifier points =
     points + 3
+
+
+baseGoldModifier : Int -> Int
+baseGoldModifier initialGold =
+    initialGold + 120
 
 
 incrementCharacterStat : CharacterStat -> Character -> Character
@@ -186,7 +197,7 @@ decrementCharacterStat characterStat (Character character) =
 
 decrementStat : StatHolder -> StatHolder
 decrementStat statHolder =
-    { statHolder | value = statHolder.value-1 }
+    { statHolder | value = statHolder.value - 1 }
 
 
 updateClass : Dict String StatHolder -> CharacterClass
@@ -252,6 +263,15 @@ updateCharacterStats (Character character) randomList =
     Character { character | stats = updateStats character.stats statList, statPoints = statPoints, experience = 1 }
 
 
+updateGold : Character -> Int -> Character
+updateGold (Character character) newGold =
+    let
+        initalGold =
+            baseGoldModifier newGold
+    in
+    Character { character | gold = initalGold }
+
+
 splitRandomList : List Int -> ( Int, List Int )
 splitRandomList randomList =
     case randomList of
@@ -311,6 +331,7 @@ getClassString : Character -> String
 getClassString (Character character) =
     classToString character.class
 
+
 getClass : Character -> CharacterClass
 getClass (Character character) =
     character.class
@@ -336,3 +357,8 @@ getStatRecord ( statName, statHolder ) =
 getXP : Character -> Int
 getXP (Character character) =
     character.experience
+
+
+getGold : Character -> Int
+getGold (Character character) =
+    character.gold

@@ -53,7 +53,7 @@ init _ =
     ( { currPage = MenuPage
       , character = Character.init Nothing
       }
-    , Random.generate NewCharacter newStats
+    , Cmd.batch [ Random.generate NewCharacter newStats, Random.generate NewGold initialGold ]
     )
 
 
@@ -73,6 +73,7 @@ subscriptions _ =
 type Msg
     = OptionSelected Page
     | NewCharacter (List Int)
+    | NewGold Int
     | ReRollCharacter
     | IncrementStat Character.CharacterStat
     | DecrementStat Character.CharacterStat
@@ -88,8 +89,11 @@ update msg model =
         NewCharacter stats ->
             ( updateModelStats model stats, Cmd.none )
 
+        NewGold gold ->
+            ( updateModelGold model gold, Cmd.none )
+
         ReRollCharacter ->
-            ( model, Random.generate NewCharacter newStats )
+            ( model, Cmd.batch [ Random.generate NewCharacter newStats, Random.generate NewGold initialGold ] )
 
         IncrementStat characterStat ->
             ( { model | character = Character.incrementCharacterStat characterStat model.character }, Cmd.none )
@@ -109,6 +113,11 @@ optionUpdate model selected =
 updateModelStats : Model -> List Int -> Model
 updateModelStats model statList =
     { model | character = Character.updateCharacterStats model.character statList }
+
+
+updateModelGold : Model -> Int -> Model
+updateModelGold model gold =
+    { model | character = Character.updateGold model.character gold }
 
 
 
@@ -202,11 +211,12 @@ printArmouryItems character =
     let
         classEquipmentList =
             equipmentList
-            |> List.filter (\x -> List.member (Character.getClass character) x.usableBy)
+                |> List.filter (\x -> List.member (Character.getClass character) x.usableBy)
+
         printClassShop =
             printShopCategory classEquipmentList
     in
-    printClassShop Armoury 
+    printClassShop Armoury
         ++ printClassShop Accoutrements
         ++ printClassShop Emporium
 
@@ -243,7 +253,8 @@ buildEquipmentTable categoryList =
               }
             ]
         }
-        ]
+    ]
+
 
 characterGeneratorPage : Character -> Browser.Document Msg
 characterGeneratorPage character =
@@ -262,6 +273,7 @@ characterGeneratorPage character =
                     ++ List.map (printStats (Character.getStatPoints character)) (Character.getStatList character)
                     ++ [ buildStatElement "Stat Points" (Character.getStatPoints character)
                        , buildStatElement "Experience" (Character.getXP character)
+                       , buildStatElement "Gold" (Character.getGold character)
                        , backButton
                        , rerollButton
                        , shopButton
@@ -432,3 +444,8 @@ main =
 newStats : Random.Generator (List Int)
 newStats =
     Random.list 9 (Random.int 1 5)
+
+
+initialGold : Random.Generator Int
+initialGold =
+    Random.int 1 60
