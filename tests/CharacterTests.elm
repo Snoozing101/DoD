@@ -181,13 +181,21 @@ all =
                     boughtItem =
                         Character.buyItem newCharacter ShortSword
 
-                    expectedInventory = [ ShortSword ]
-                    actualInventory = Character.getInventory boughtItem
-                    expectedGold = 108
-                    actualGold = Character.getGold boughtItem
+                    expectedInventory =
+                        [ ShortSword ]
+
+                    actualInventory =
+                        Character.getInventory boughtItem
+
+                    expectedGold =
+                        108
+
+                    actualGold =
+                        Character.getGold boughtItem
                 in
                 if expectedInventory == actualInventory && expectedGold == actualGold then
                     Expect.pass
+
                 else
                     Expect.fail "Didn't buy item"
         , test "Can't buy an item if insuffient funds" <|
@@ -197,19 +205,53 @@ all =
                         Character.updateGold buildBaseCharacter 0
 
                     boughtItems =
-                        List.range 1 11
-                        |> List.foldl (\_ acc -> Character.buyItem acc ShortSword) newCharacter
+                        List.range 1 21
+                            |> List.foldl (\_ acc -> Character.buyItem acc Potions) newCharacter
 
-                    expectedInventorySize = 10
-                    actualInventorySize = List.length (Character.getInventory boughtItems)
-                    expectedGold = 0
-                    actualGold = Character.getGold boughtItems
+                    expectedInventorySize =
+                        20
+
+                    actualInventorySize =
+                        List.length (Character.getInventory boughtItems)
+
+                    expectedGold =
+                        0
+
+                    actualGold =
+                        Character.getGold boughtItems
                 in
                 if expectedInventorySize == actualInventorySize && expectedGold == actualGold then
                     Expect.pass
+
                 else
                     Expect.fail "Bought more than expected items"
+        , test "Can't buy more than one of a unique item" <|
+            \_ ->
+                let
+                    newCharacter =
+                        Character.updateGold buildBaseCharacter 0
 
+                    boughtItems =
+                        List.range 1 11
+                            |> List.foldl (\_ acc -> Character.buyItem acc ShortSword) newCharacter
+
+                    expectedInventory =
+                        [ ShortSword ]
+
+                    actualInventory =
+                        Character.getInventory boughtItems
+
+                    expectedGold =
+                        108
+
+                    actualGold =
+                        Character.getGold boughtItems
+                in
+                if expectedInventory == actualInventory && expectedGold == actualGold then
+                    Expect.pass
+
+                else
+                    Expect.fail "Managed to buy more than one unique item"
         ]
 
 

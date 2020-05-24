@@ -341,9 +341,11 @@ getGold : Character -> Int
 getGold (Character character) =
     character.gold
 
+
 getInventory : Character -> List Equipment.Item
 getInventory (Character character) =
     character.inventory
+
 
 buyItem : Character -> Equipment.Item -> Character
 buyItem (Character character) item =
@@ -356,8 +358,12 @@ buyItem (Character character) item =
 
         newInventory =
             item :: character.inventory
+
+        isUnique =
+            item
+            |> Equipment.isUnique
     in
-    if newGold < 0 then
+    if (newGold < 0) || (isUnique && List.member item character.inventory) then
         Character character
 
     else
