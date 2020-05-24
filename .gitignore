@@ -17,4 +17,4 @@ node_modules
 tags
 
 # Ignore the stuff in basic
-basic
+basic/
