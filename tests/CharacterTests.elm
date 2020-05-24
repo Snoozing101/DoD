@@ -2,6 +2,7 @@ module CharacterTests exposing (..)
 
 import Character exposing (CharacterStat(..))
 import Class exposing (CharacterClass(..))
+import Equipment exposing (Item(..))
 import Expect
 import Test exposing (..)
 
@@ -31,9 +32,9 @@ all =
                 let
                     expectedStats =
                         getAscendingValues
-                        |> List.tail
-                        |> Maybe.withDefault []
-                        |> List.map (\x -> x + 2)
+                            |> List.tail
+                            |> Maybe.withDefault []
+                            |> List.map (\x -> x + 2)
 
                     newCharacter =
                         Character.updateCharacterStats buildBaseCharacter getAscendingValues
@@ -56,7 +57,6 @@ all =
                 let
                     newCharacter =
                         Character.updateGold buildBaseCharacter 50
-
                 in
                 Expect.equal (Character.getGold newCharacter) 170
         , test "Decrement stats correctly" <|
@@ -172,6 +172,44 @@ all =
                         [ "Strength", "Vitality", "Agility", "Intelligence", "Luck", "Aura", "Morality" ]
                 in
                 Expect.equal statStrings expectedOrder
+        , test "Buy item adds to inventory & reduces gold" <|
+            \_ ->
+                let
+                    newCharacter =
+                        Character.updateGold buildBaseCharacter 0
+
+                    boughtItem =
+                        Character.buyItem newCharacter ShortSword
+
+                    expectedInventory = [ ShortSword ]
+                    actualInventory = Character.getInventory boughtItem
+                    expectedGold = 108
+                    actualGold = Character.getGold boughtItem
+                in
+                if expectedInventory == actualInventory && expectedGold == actualGold then
+                    Expect.pass
+                else
+                    Expect.fail "Didn't buy item"
+        , test "Can't buy an item if insuffient funds" <|
+            \_ ->
+                let
+                    newCharacter =
+                        Character.updateGold buildBaseCharacter 0
+
+                    boughtItems =
+                        List.range 1 11
+                        |> List.foldl (\_ acc -> Character.buyItem acc ShortSword) newCharacter
+
+                    expectedInventorySize = 10
+                    actualInventorySize = List.length (Character.getInventory boughtItems)
+                    expectedGold = 0
+                    actualGold = Character.getGold boughtItems
+                in
+                if expectedInventorySize == actualInventorySize && expectedGold == actualGold then
+                    Expect.pass
+                else
+                    Expect.fail "Bought more than expected items"
+
         ]
 
 

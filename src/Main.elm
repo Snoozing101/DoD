@@ -78,6 +78,7 @@ type Msg
     | IncrementStat Character.CharacterStat
     | DecrementStat Character.CharacterStat
     | UpdateName String
+    | BuyItem Equipment.Item
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -103,6 +104,9 @@ update msg model =
 
         UpdateName newName ->
             ( { model | character = Character.setName model.character newName }, Cmd.none )
+
+        BuyItem item ->
+            ( { model | character = Character.buyItem model.character item }, Cmd.none )
 
 
 optionUpdate : Model -> Page -> Model
@@ -201,7 +205,9 @@ shopPage character =
     , body =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
-                (printArmouryItems character)
+                ((el [ Font.size 20, Font.color white ] <| text ("Gold Coins: " ++ String.fromInt (Character.getGold character)))
+                    :: printArmouryItems character
+                )
         ]
     }
 
@@ -250,6 +256,20 @@ buildEquipmentTable categoryList =
               , view =
                     \item ->
                         el [ Font.alignRight ] <| text (String.fromInt item.price)
+              }
+            , { header = none
+              , width = fill
+              , view =
+                    \item ->
+                        el [ Font.alignRight ] <|
+                            Input.button
+                                [ Background.color blue
+                                , Element.focused
+                                    [ Background.color blue ]
+                                ]
+                                { onPress = Just (BuyItem item.item)
+                                , label = text "Buy"
+                                }
               }
             ]
         }

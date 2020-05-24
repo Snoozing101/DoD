@@ -2,10 +2,12 @@ module Character exposing
     ( Character
     , CharacterStat(..)
     , Stat
+    , buyItem
     , decrementCharacterStat
     , getClass
     , getClassString
     , getGold
+    , getInventory
     , getName
     , getStatList
     , getStatPoints
@@ -21,6 +23,7 @@ import Array
 import Class exposing (CharacterClass(..), classToString)
 import Dict exposing (Dict)
 import Equipment exposing (Equipment)
+
 
 type alias Stat =
     { name : String
@@ -79,7 +82,7 @@ type Character
         , experience : Int
         , statPoints : Int
         , gold : Int
-        , inventory : List Equipment
+        , inventory : List Equipment.Item
         }
 
 
@@ -337,3 +340,25 @@ getXP (Character character) =
 getGold : Character -> Int
 getGold (Character character) =
     character.gold
+
+getInventory : Character -> List Equipment.Item
+getInventory (Character character) =
+    character.inventory
+
+buyItem : Character -> Equipment.Item -> Character
+buyItem (Character character) item =
+    let
+        itemCost =
+            Equipment.getPrice item
+
+        newGold =
+            character.gold - itemCost
+
+        newInventory =
+            item :: character.inventory
+    in
+    if newGold < 0 then
+        Character character
+
+    else
+        Character { character | gold = newGold, inventory = newInventory }

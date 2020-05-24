@@ -1,4 +1,4 @@
-module Equipment exposing (Equipment, EquipmentCategory(..), equipmentCategorytoString, equipmentList, itemToString)
+module Equipment exposing (Equipment, EquipmentCategory(..), Item(..), getPrice, equipmentCategorytoString, equipmentList, itemToString)
 
 import Class exposing (CharacterClass(..))
 
@@ -134,3 +134,25 @@ equipmentList =
     , Equipment [ Wanderer, Cleric, Magician, Warrior, Barbarian ] 6  1 HealingSalve Emporium
     , Equipment [ Wanderer, Cleric, Magician, Warrior, Barbarian ] 6  1 Potions Emporium
     ]                                                                   
+
+
+findEquipment : Item -> Maybe Equipment
+findEquipment item =
+    List.filter (\listItem -> listItem.item == item) equipmentList
+    |> List.head
+
+getPrice : Item -> Int
+getPrice item =
+    item
+    |> findEquipment
+    |> getPriceFromList
+
+getPriceFromList : Maybe Equipment -> Int
+getPriceFromList maybeEquipment =
+    case maybeEquipment of
+        Just equipment ->
+            equipment.price
+
+        Nothing ->
+            0
+
