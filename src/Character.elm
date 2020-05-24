@@ -1,6 +1,5 @@
 module Character exposing
     ( Character
-    , CharacterClass(..)
     , CharacterStat(..)
     , Stat
     , decrementCharacterStat
@@ -19,8 +18,9 @@ module Character exposing
     )
 
 import Array
+import Class exposing (CharacterClass(..), classToString)
 import Dict exposing (Dict)
-
+import Equipment exposing (Equipment)
 
 type alias Stat =
     { name : String
@@ -71,33 +71,6 @@ characterStatToString stat =
             "Morality"
 
 
-type CharacterClass
-    = Wanderer
-    | Cleric
-    | Magician
-    | Warrior
-    | Barbarian
-
-
-classToString : CharacterClass -> String
-classToString class =
-    case class of
-        Wanderer ->
-            "Wanderer"
-
-        Cleric ->
-            "Cleric"
-
-        Magician ->
-            "Magician"
-
-        Warrior ->
-            "Warrior"
-
-        Barbarian ->
-            "Barbarian"
-
-
 type Character
     = Character
         { class : CharacterClass
@@ -106,6 +79,7 @@ type Character
         , experience : Int
         , statPoints : Int
         , gold : Int
+        , inventory : List Equipment
         }
 
 
@@ -127,6 +101,7 @@ init characterName =
         , experience = 0
         , statPoints = 0
         , gold = 0
+        , inventory = []
         }
 
 

@@ -1,6 +1,7 @@
 module CharacterTests exposing (..)
 
-import Character exposing (CharacterClass(..), CharacterStat(..))
+import Character exposing (CharacterStat(..))
+import Class exposing (CharacterClass(..))
 import Expect
 import Test exposing (..)
 
@@ -50,6 +51,14 @@ all =
                         Character.updateCharacterStats buildBaseCharacter getRandomValues
                 in
                 Expect.equal (Character.getStatPoints newCharacter) 6
+        , test "Is inital gold set correctly" <|
+            \_ ->
+                let
+                    newCharacter =
+                        Character.updateGold buildBaseCharacter 50
+
+                in
+                Expect.equal (Character.getGold newCharacter) 170
         , test "Decrement stats correctly" <|
             \_ ->
                 let

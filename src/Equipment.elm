@@ -1,6 +1,6 @@
 module Equipment exposing (Equipment, EquipmentCategory(..), equipmentCategorytoSting, equipmentList)
 
-import Character exposing (CharacterClass(..))
+import Class exposing (CharacterClass(..))
 
 type alias Equipment =
     { usableBy : List CharacterClass
