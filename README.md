@@ -14,8 +14,10 @@ To build to push to github pages I use
 PUBLIC_URL=./ elm-app build
 ```
 
-The build is then pushed online with
+The build is then pushed online with the [gh-pages](https://github.com/tschaub/gh-pages) command as follows:
 
 ```
-gh-pages
+gh-pages -d build
 ```
+
+
