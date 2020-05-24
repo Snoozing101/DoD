@@ -8,7 +8,7 @@ import Element.Border as Border
 import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
-import Equipment exposing (Equipment, EquipmentCategory(..), equipmentCategorytoSting, equipmentList)
+import Equipment exposing (Equipment, EquipmentCategory(..), equipmentCategorytoString, equipmentList)
 import Random
 
 
@@ -223,7 +223,7 @@ printArmouryItems character =
 
 printShopCategory : List Equipment -> EquipmentCategory -> List (Element Msg)
 printShopCategory classEquipmentList category =
-    [ el [ Font.size 20, Font.color white ] <| text (equipmentCategorytoSting category)
+    [ el [ Font.size 20, Font.color white ] <| text (equipmentCategorytoString category)
     , row [ paddingXY 50 10 ]
         [ column []
             (classEquipmentList
@@ -243,7 +243,7 @@ buildEquipmentTable categoryList =
               , width = fill
               , view =
                     \item ->
-                        el [ Font.alignLeft ] <| text item.description
+                        el [ Font.alignLeft ] <| text (Equipment.itemToString item.item)
               }
             , { header = el [ Font.color green ] <| text "Price"
               , width = fill
