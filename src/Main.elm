@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (main, buyItem, Model, init, Page(..))
 
 import Browser
 import Character exposing (Character)
@@ -501,6 +501,7 @@ buyItem model item =
         newCharacter =
             model.character
                 |> Character.setGold newGold
+                |> Character.addToInventory item
     in
     if (newGold < 0) || (stockStatus == Equipment.OutOfStock && List.member item oldInventory) then
         model
