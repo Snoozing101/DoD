@@ -65,7 +65,7 @@ all =
 
                 else
                     Expect.fail "Bought more than expected items"
-        , test "Can't buy more than one of a unique item" <|
+        , test "Can't buy more than one of an item other that doesn't have InfiniteStock" <|
             \_ ->
                 let
                     newModel =
@@ -91,5 +91,33 @@ all =
                     Expect.pass
 
                 else
-                    Expect.fail "Managed to buy more than one unique item"
+                    Expect.fail "Managed to buy more than one item that isn't InfiniteStock"
+        , test "Status of InStock item goes OutOfStock once purchased" <|
+            \_ ->
+                let
+                    newModel =
+                        Main.Model Main.MenuPage (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+
+                    boughtItem =
+                        buyItem newModel ShortSword
+
+                    newStockStatus =
+                        Equipment.getStockStatus boughtItem.shop ShortSword
+
+                in
+                Expect.equal newStockStatus Equipment.OutOfStock
+        , test "Status of InfiniteStock item does not change when purchased" <|
+            \_ ->
+                let
+                    newModel =
+                        Main.Model Main.MenuPage (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+
+                    boughtItem =
+                        buyItem newModel Potions
+
+                    newStockStatus =
+                        Equipment.getStockStatus boughtItem.shop Potions
+
+                in
+                Expect.equal newStockStatus Equipment.InfiniteStock
         ]
