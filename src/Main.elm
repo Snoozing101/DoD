@@ -256,7 +256,7 @@ buildEquipmentTable categoryList =
                         else
                             el [ Font.alignLeft ] <| text (Equipment.itemToString item.item)
               }
-            , { header = el [ Font.color green ] <| text "Price ∞"
+            , { header = el [ Font.color green ] <| text "Price"
               , width = fill
               , view =
                     \item ->
@@ -264,6 +264,20 @@ buildEquipmentTable categoryList =
                             el [ Font.alignRight, Font.strike ] <| text (String.fromInt item.price)
                         else
                             el [ Font.alignRight ] <| text (String.fromInt item.price)
+              }
+            , { header = el [ Font.color green ] <| text "Qty"
+              , width = fill
+              , view =
+                    \item ->
+                        case item.stockStatus of
+                            Equipment.InStock ->
+                                el [ Font.alignRight ] <| text "1"
+                                
+                            Equipment.OutOfStock ->
+                                el [ Font.alignRight ] <| text "0"
+
+                            Equipment.InfiniteStock ->
+                                el [ Font.alignRight ] <| text "∞"
               }
             , { header = none
               , width = fill
