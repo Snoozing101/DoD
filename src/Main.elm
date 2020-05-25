@@ -41,6 +41,7 @@ type Page
 type alias Model =
     { currPage : Page
     , character : Character
+    , shop : List Equipment
     }
 
 
@@ -51,7 +52,8 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { currPage = MenuPage
-      , character = Character.init Nothing
+      , character = Character.initStats Nothing
+      , shop = Equipment.equipmentList
       }
     , Cmd.batch [ Random.generate NewCharacter newStats, Random.generate NewGold initialGold ]
     )
@@ -106,7 +108,7 @@ update msg model =
             ( { model | character = Character.setName model.character newName }, Cmd.none )
 
         BuyItem item ->
-            ( { model | character = Character.buyItem model.character item }, Cmd.none )
+            ( buyItem model item, Cmd.none )
 
 
 optionUpdate : Model -> Page -> Model
@@ -121,7 +123,7 @@ updateModelStats model statList =
 
 updateModelGold : Model -> Int -> Model
 updateModelGold model gold =
-    { model | character = Character.updateGold model.character gold }
+    { model | character = Character.initGold model.character gold }
 
 
 
@@ -144,7 +146,7 @@ view model =
             holdingPage "The Game"
 
         ShopPage ->
-            shopPage model.character
+            shopPage model
 
 
 menuPage : Browser.Document Msg
@@ -199,25 +201,25 @@ holdingPage pageName =
     }
 
 
-shopPage : Character -> Browser.Document Msg
-shopPage character =
+shopPage : Model -> Browser.Document Msg
+shopPage model =
     { title = "Dungeon of Doom - Shop"
     , body =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
-                ((el [ Font.size 20, Font.color white ] <| text ("Gold Coins: " ++ String.fromInt (Character.getGold character)))
-                    :: printArmouryItems character
+                ((el [ Font.size 20, Font.color white ] <| text ("Gold Coins: " ++ String.fromInt (Character.getGold model.character)))
+                    :: printArmouryItems model
                 )
         ]
     }
 
 
-printArmouryItems : Character -> List (Element Msg)
-printArmouryItems character =
+printArmouryItems : Model -> List (Element Msg)
+printArmouryItems model =
     let
         classEquipmentList =
-            equipmentList
-                |> List.filter (\x -> List.member (Character.getClass character) x.usableBy)
+            model.shop
+                |> List.filter (\x -> List.member (Character.getClass model.character) x.usableBy)
 
         printClassShop =
             printShopCategory classEquipmentList
@@ -249,27 +251,36 @@ buildEquipmentTable categoryList =
               , width = fill
               , view =
                     \item ->
-                        el [ Font.alignLeft ] <| text (Equipment.itemToString item.item)
+                        if item.stockStatus == Equipment.OutOfStock then
+                            el [ Font.alignLeft, Font.strike ] <| text (Equipment.itemToString item.item)
+                        else
+                            el [ Font.alignLeft ] <| text (Equipment.itemToString item.item)
               }
-            , { header = el [ Font.color green ] <| text "Price"
+            , { header = el [ Font.color green ] <| text "Price ∞"
               , width = fill
               , view =
                     \item ->
-                        el [ Font.alignRight ] <| text (String.fromInt item.price)
+                        if item.stockStatus == Equipment.OutOfStock then
+                            el [ Font.alignRight, Font.strike ] <| text (String.fromInt item.price)
+                        else
+                            el [ Font.alignRight ] <| text (String.fromInt item.price)
               }
             , { header = none
               , width = fill
               , view =
                     \item ->
-                        el [ Font.alignRight ] <|
-                            Input.button
-                                [ Background.color blue
-                                , Element.focused
-                                    [ Background.color blue ]
-                                ]
-                                { onPress = Just (BuyItem item.item)
-                                , label = text "Buy"
-                                }
+                        if item.stockStatus == Equipment.OutOfStock then
+                            none
+                        else
+                            el [ Font.alignRight ] <|
+                                Input.button
+                                    [ Background.color blue
+                                    , Element.focused
+                                        [ Background.color blue ]
+                                    ]
+                                    { onPress = Just (BuyItem item.item)
+                                    , label = text "Buy"
+                                    }
               }
             ]
         }
@@ -469,3 +480,33 @@ newStats =
 initialGold : Random.Generator Int
 initialGold =
     Random.int 1 60
+
+
+buyItem : Model -> Equipment.Item -> Model
+buyItem model item =
+    let
+        itemCost =
+            Equipment.getPrice model.shop item
+
+        newGold =
+            Character.getGold model.character - itemCost
+
+        oldInventory =
+            Character.getInventory model.character
+
+        stockStatus =
+            item
+                |> Equipment.getStockStatus model.shop
+
+        newCharacter =
+            model.character
+                |> Character.setGold newGold
+    in
+    if (newGold < 0) || (stockStatus == Equipment.OutOfStock && List.member item oldInventory) then
+        model
+
+    else if stockStatus == Equipment.InStock then
+        { model | character = newCharacter, shop = Equipment.setOutOfStock model.shop item }
+
+    else
+        { model | character = newCharacter }

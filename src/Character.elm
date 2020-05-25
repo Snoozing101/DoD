@@ -2,7 +2,7 @@ module Character exposing
     ( Character
     , CharacterStat(..)
     , Stat
-    , buyItem
+    , addToInventory
     , decrementCharacterStat
     , getClass
     , getClassString
@@ -13,16 +13,17 @@ module Character exposing
     , getStatPoints
     , getXP
     , incrementCharacterStat
-    , init
+    , initGold
+    , initStats
     , setName
+    , setGold
     , updateCharacterStats
-    , updateGold
     )
 
 import Array
 import Class exposing (CharacterClass(..), classToString)
 import Dict exposing (Dict)
-import Equipment exposing (Equipment)
+import Equipment
 
 
 type alias Stat =
@@ -86,8 +87,8 @@ type Character
         }
 
 
-init : Maybe String -> Character
-init characterName =
+initStats : Maybe String -> Character
+initStats characterName =
     Character
         { class = Wanderer
         , name = characterName
@@ -241,14 +242,17 @@ updateCharacterStats (Character character) randomList =
     Character { character | stats = updateStats character.stats statList, statPoints = statPoints, experience = 1 }
 
 
-updateGold : Character -> Int -> Character
-updateGold (Character character) newGold =
+initGold : Character -> Int -> Character
+initGold (Character character) newGold =
     let
         initalGold =
             baseGoldModifier newGold
     in
     Character { character | gold = initalGold }
 
+setGold : Int -> Character  -> Character
+setGold newGold (Character character) =
+    Character { character | gold = newGold }
 
 splitRandomList : List Int -> ( Int, List Int )
 splitRandomList randomList =
@@ -346,25 +350,7 @@ getInventory : Character -> List Equipment.Item
 getInventory (Character character) =
     character.inventory
 
+addToInventory : Equipment.Item -> Character -> Character
+addToInventory item (Character character) =
+    Character { character | inventory = character.inventory ++ [ item ] }
 
-buyItem : Character -> Equipment.Item -> Character
-buyItem (Character character) item =
-    let
-        itemCost =
-            Equipment.getPrice item
-
-        newGold =
-            character.gold - itemCost
-
-        newInventory =
-            item :: character.inventory
-
-        isUnique =
-            item
-            |> Equipment.isUnique
-    in
-    if (newGold < 0) || (isUnique && List.member item character.inventory) then
-        Character character
-
-    else
-        Character { character | gold = newGold, inventory = newInventory }
