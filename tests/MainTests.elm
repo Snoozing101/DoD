@@ -16,7 +16,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItem =
                         buyItem newModel ShortSword
@@ -42,7 +42,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItems =
                         List.range 1 21
@@ -69,7 +69,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItems =
                         List.range 1 11
@@ -96,7 +96,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItem =
                         buyItem newModel ShortSword
@@ -110,7 +110,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItem =
                         buyItem newModel Potions

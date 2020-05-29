@@ -1,4 +1,4 @@
-module Main exposing (main, buyItem, Model, init, Page(..))
+module Main exposing (Model, Page(..), buyItem, init, main)
 
 import Browser
 import Character exposing (Character)
@@ -40,6 +40,10 @@ type Page
 
 type alias Model =
     { currPage : Page
+    , makeOffer : Bool
+    , itemUnderOffer : Maybe Equipment.Item
+    , currentOffer : String
+    , secretPrice : Int
     , character : Character
     , shop : List Equipment
     }
@@ -52,6 +56,10 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { currPage = MenuPage
+      , makeOffer = False
+      , itemUnderOffer = Nothing
+      , currentOffer = ""
+      , secretPrice = 0
       , character = Character.initStats Nothing
       , shop = Equipment.equipmentList
       }
@@ -81,6 +89,11 @@ type Msg
     | DecrementStat Character.CharacterStat
     | UpdateName String
     | BuyItem Equipment.Item
+    | BargainForItem Equipment.Item
+    | UpdateOffer String
+    | CancelOffer
+    | MakeOffer
+    | NewBargainPrice Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -109,6 +122,31 @@ update msg model =
 
         BuyItem item ->
             ( buyItem model item, Cmd.none )
+
+        BargainForItem item ->
+            ( { model | makeOffer = True, itemUnderOffer = Just item }, Random.generate NewBargainPrice bargainPrice )
+
+        UpdateOffer offer ->
+            ( { model | currentOffer = offer }, Cmd.none )
+
+        CancelOffer ->
+            ( { model | makeOffer = False, itemUnderOffer = Nothing }, Cmd.none )
+
+        MakeOffer ->
+            ( model, Cmd.none )
+
+        NewBargainPrice priceDifference ->
+            ( { model | secretPrice = getSecretPrice model priceDifference }, Cmd.none )
+
+
+getSecretPrice : Model -> Int -> Int
+getSecretPrice model priceDifference =
+    case model.itemUnderOffer of
+        Just item ->
+            Equipment.getPrice model.shop item - priceDifference
+
+        Nothing ->
+            0
 
 
 optionUpdate : Model -> Page -> Model
@@ -149,6 +187,10 @@ view model =
             shopPage model
 
 
+
+---- VIEW MENU ----
+
+
 menuPage : Browser.Document Msg
 menuPage =
     { title = "Dungeon of Doom"
@@ -187,6 +229,78 @@ menuPage =
     }
 
 
+
+---- VIEW OFFER DIALOG ----
+
+
+offerDialog : Model -> Element Msg
+offerDialog model =
+    let
+        itemString =
+            case model.itemUnderOffer of
+                Just item ->
+                    Equipment.itemToString item
+
+                Nothing ->
+                    "Unknown"
+    in
+    if model.makeOffer then
+        el
+            [ Background.color black
+            , Font.color white
+            , Font.size 20
+            , Font.alignLeft
+            , padding 10
+            , width (px 350)
+            , height (px 150)
+            , centerX
+            , centerY
+            , Border.rounded 10
+            , Border.color white
+            , Border.width 2
+            ]
+        <|
+            column []
+                [ row [ paddingXY 0 10 ]
+                    [ Input.text [ Font.color black ]
+                        { onChange = UpdateOffer
+                        , text = model.currentOffer
+                        , placeholder = Nothing
+                        , label = Input.labelAbove [] <| text ("Make an offer on " ++ itemString)
+                        }
+                    ]
+                , row [ alignRight, spacingXY 5 0 ]
+                    [ Input.button
+                        [ Background.color blue
+                        , Element.focused
+                            [ Background.color blue ]
+                        , Font.color white
+                        , alignRight
+                        ]
+                        { onPress = Just CancelOffer
+                        , label = el [] <| text "Cancel"
+                        }
+                    , Input.button
+                        [ Background.color blue
+                        , Element.focused
+                            [ Background.color blue ]
+                        , Font.color white
+                        , alignRight
+                        ]
+                        { onPress = Just MakeOffer
+                        , label = el [] <| text "Offer"
+                        }
+                    ]
+                ]
+
+    else
+        none
+
+
+
+---- VIEW HOLDING PAGE ----
+
+
 holdingPage : String -> Browser.Document Msg
 holdingPage pageName =
     { title = "Dungeon of Doom - " ++ pageName
@@ -201,11 +315,15 @@ holdingPage pageName =
     }
 
 
+
+---- VIEW SHOP PAGE ----
+
+
 shopPage : Model -> Browser.Document Msg
 shopPage model =
     { title = "Dungeon of Doom - Shop"
     , body =
-        [ layout [ Background.color black ] <|
+        [ layout [ Background.color black, inFront (offerDialog model) ] <|
             column [ width fill, paddingXY 0 100 ]
                 ((el [ Font.size 20, Font.color white ] <| text ("Gold Coins: " ++ String.fromInt (Character.getGold model.character)))
                     :: printArmouryItems model
@@ -244,7 +362,7 @@ printShopCategory classEquipmentList category =
 
 buildEquipmentTable : List Equipment -> List (Element Msg)
 buildEquipmentTable categoryList =
-    [ table [ Font.size 20, Font.color white, spacingXY 20 0 ]
+    [ table [ Font.size 20, Font.color white, spacingXY 15 5 ]
         { data = categoryList
         , columns =
             [ { header = el [ Font.alignLeft, Font.color green ] <| text "Item"
@@ -253,6 +371,7 @@ buildEquipmentTable categoryList =
                     \item ->
                         if item.stockStatus == Equipment.OutOfStock then
                             el [ Font.alignLeft, Font.strike ] <| text (Equipment.itemToString item.item)
+
                         else
                             el [ Font.alignLeft ] <| text (Equipment.itemToString item.item)
               }
@@ -262,6 +381,7 @@ buildEquipmentTable categoryList =
                     \item ->
                         if item.stockStatus == Equipment.OutOfStock then
                             el [ Font.alignRight, Font.strike ] <| text (String.fromInt item.price)
+
                         else
                             el [ Font.alignRight ] <| text (String.fromInt item.price)
               }
@@ -272,7 +392,7 @@ buildEquipmentTable categoryList =
                         case item.stockStatus of
                             Equipment.InStock ->
                                 el [ Font.alignRight ] <| text "1"
-                                
+
                             Equipment.OutOfStock ->
                                 el [ Font.alignRight ] <| text "0"
 
@@ -285,6 +405,7 @@ buildEquipmentTable categoryList =
                     \item ->
                         if item.stockStatus == Equipment.OutOfStock then
                             none
+
                         else
                             el [ Font.alignRight ] <|
                                 Input.button
@@ -296,9 +417,31 @@ buildEquipmentTable categoryList =
                                     , label = text "Buy"
                                     }
               }
+            , { header = none
+              , width = fill
+              , view =
+                    \item ->
+                        if item.stockStatus == Equipment.OutOfStock then
+                            none
+
+                        else
+                            el [ Font.alignRight ] <|
+                                Input.button
+                                    [ Background.color blue
+                                    , Element.focused
+                                        [ Background.color blue ]
+                                    ]
+                                    { onPress = Just (BargainForItem item.item)
+                                    , label = text "Bargain"
+                                    }
+              }
             ]
         }
     ]
+
+
+
+---- VIEW CHARACTER GENERATOR PAGE ----
 
 
 characterGeneratorPage : Character -> Browser.Document Msg
@@ -369,24 +512,6 @@ adjustButtons statPoints characterStat statValue =
         ]
 
 
-processIncrement : Int -> Character.CharacterStat -> Maybe Msg
-processIncrement statPoints characterStat =
-    if statPoints > 0 then
-        Just (IncrementStat characterStat)
-
-    else
-        Nothing
-
-
-processDecrement : Int -> Character.CharacterStat -> Maybe Msg
-processDecrement statValue characterStat =
-    if statValue > 0 then
-        Just (DecrementStat characterStat)
-
-    else
-        Nothing
-
-
 buildStatElement : String -> Int -> Element msg
 buildStatElement name val =
     el [ Font.size 20, Font.color white ] <|
@@ -442,6 +567,10 @@ buildList option =
         text option.description
 
 
+
+---- COLOR SETTING ----
+
+
 blue : Color
 blue =
     rgb255 0 0 255
@@ -472,6 +601,11 @@ darkGrey =
     rgb255 100 100 100
 
 
+red : Color
+red =
+    rgb255 255 0 0
+
+
 
 ---- PROGRAM ----
 
@@ -494,6 +628,11 @@ newStats =
 initialGold : Random.Generator Int
 initialGold =
     Random.int 1 60
+
+
+bargainPrice : Random.Generator Int
+bargainPrice =
+    Random.int 1 3
 
 
 buyItem : Model -> Equipment.Item -> Model
@@ -525,3 +664,21 @@ buyItem model item =
 
     else
         { model | character = newCharacter }
+
+
+processIncrement : Int -> Character.CharacterStat -> Maybe Msg
+processIncrement statPoints characterStat =
+    if statPoints > 0 then
+        Just (IncrementStat characterStat)
+
+    else
+        Nothing
+
+
+processDecrement : Int -> Character.CharacterStat -> Maybe Msg
+processDecrement statValue characterStat =
+    if statValue > 0 then
+        Just (DecrementStat characterStat)
+
+    else
+        Nothing
