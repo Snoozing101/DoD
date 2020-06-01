@@ -71,7 +71,7 @@ init _ =
       , character = Character.initStats Nothing
       , shop = Equipment.equipmentList
       }
-    , Cmd.batch [ Random.generate NewCharacter newStats, Random.generate NewGold initialGold ]
+    , Cmd.none
     )
 
 
