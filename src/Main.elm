@@ -92,7 +92,6 @@ type Msg
     = OptionSelected Page
     | NewCharacter (List Int)
     | NewGold Int
-    | ReRollCharacter
     | IncrementStat Character.CharacterStat
     | DecrementStat Character.CharacterStat
     | UpdateName String
@@ -107,16 +106,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         OptionSelected page ->
-            ( optionUpdate model page, Cmd.none )
+            ( optionUpdate model page, processPageCmd page )
 
         NewCharacter stats ->
             ( updateModelStats model stats, Cmd.none )
 
         NewGold gold ->
             ( updateModelGold model gold, Cmd.none )
-
-        ReRollCharacter ->
-            ( model, Cmd.batch [ Random.generate NewCharacter newStats, Random.generate NewGold initialGold ] )
 
         IncrementStat characterStat ->
             ( { model | character = Character.incrementCharacterStat characterStat model.character }, Cmd.none )
@@ -144,6 +140,16 @@ update msg model =
 
         NewBargainPrice priceDifference ->
             ( { model | secretPrice = getSecretPrice model priceDifference }, Cmd.none )
+
+
+processPageCmd : Page -> Cmd Msg
+processPageCmd page =
+    if page == CharacterGenerator then
+        Cmd.batch [ Random.generate NewCharacter newStats, Random.generate NewGold initialGold ]
+
+    else
+        Cmd.none
+
 
 
 
@@ -537,7 +543,6 @@ characterGeneratorPage character =
                        , buildStatElement "Experience" (Character.getXP character)
                        , buildStatElement "Gold" (Character.getGold character)
                        , backButton
-                       , rerollButton
                        , shopButton
                        ]
                 )
@@ -590,18 +595,6 @@ buildStatElement : String -> Int -> Element msg
 buildStatElement name val =
     el [ Font.size 20, Font.color white ] <|
         text (name ++ ": " ++ String.fromInt val)
-
-
-rerollButton : Element Msg
-rerollButton =
-    Input.button
-        [ Background.color blue
-        , Element.focused
-            [ Background.color blue ]
-        ]
-        { onPress = Just ReRollCharacter
-        , label = text "Reroll Character"
-        }
 
 
 backButton : Element Msg
