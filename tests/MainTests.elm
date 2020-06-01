@@ -16,7 +16,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItem =
                         buyItem newModel ShortSword
@@ -42,7 +42,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItems =
                         List.range 1 21
@@ -69,7 +69,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItems =
                         List.range 1 11
@@ -96,7 +96,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItem =
                         buyItem newModel ShortSword
@@ -110,7 +110,7 @@ all =
             \_ ->
                 let
                     newModel =
-                        Main.Model Main.MenuPage False Nothing "" 0 (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+                        Main.Model Main.MenuPage False Nothing "" 0 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
 
                     boughtItem =
                         buyItem newModel Potions
@@ -120,4 +120,38 @@ all =
 
                 in
                 Expect.equal newStockStatus Equipment.InfiniteStock
+        , test "Offer price greater than bargainPrice then accept offer" <|
+            \_ ->
+                let
+                    newModel =
+                        Main.Model Main.MenuPage False Nothing "11" 10 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+
+                    offerMessage =
+                        Main.checkOffer newModel
+
+                in
+                Expect.equal offerMessage Main.AcceptedOfferMessage
+        , test "Offer price equal to bargainPrice then accept offer" <|
+            \_ ->
+                let
+                    newModel =
+                        Main.Model Main.MenuPage False Nothing "10" 10 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+
+                    offerMessage =
+                        Main.checkOffer newModel
+
+                in
+                Expect.equal offerMessage Main.AcceptedOfferMessage
+        , test "Offer price less than bargainPrice then reject offer" <|
+            \_ ->
+                let
+                    newModel =
+                        Main.Model Main.MenuPage False Nothing "9" 10 Main.NoOffer (Character.initGold CharacterTests.buildBaseCharacter 0) Equipment.equipmentList
+
+                    offerMessage =
+                        Main.checkOffer newModel
+
+                in
+                Expect.equal offerMessage Main.RejectedOfferMessage
+
         ]

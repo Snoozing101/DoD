@@ -1,4 +1,4 @@
-module Main exposing (Model, Page(..), buyItem, init, main)
+module Main exposing (Model, Page(..), OfferMessage(..), buyItem, checkOffer, init, main)
 
 import Browser
 import Character exposing (Character)
@@ -44,9 +44,16 @@ type alias Model =
     , itemUnderOffer : Maybe Equipment.Item
     , currentOffer : String
     , secretPrice : Int
+    , offerMessage : OfferMessage
     , character : Character
     , shop : List Equipment
     }
+
+
+type OfferMessage
+    = NoOffer
+    | RejectedOfferMessage
+    | AcceptedOfferMessage
 
 
 type alias Flags =
@@ -60,6 +67,7 @@ init _ =
       , itemUnderOffer = Nothing
       , currentOffer = ""
       , secretPrice = 0
+      , offerMessage = NoOffer
       , character = Character.initStats Nothing
       , shop = Equipment.equipmentList
       }
@@ -95,7 +103,6 @@ type Msg
     | MakeOffer
     | NewBargainPrice Int
 
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -124,19 +131,58 @@ update msg model =
             ( buyItem model item, Cmd.none )
 
         BargainForItem item ->
-            ( { model | makeOffer = True, itemUnderOffer = Just item }, Random.generate NewBargainPrice bargainPrice )
+            ( { model | makeOffer = True, itemUnderOffer = Just item, currentOffer = "", offerMessage = NoOffer }, Random.generate NewBargainPrice bargainPrice )
 
         UpdateOffer offer ->
-            ( { model | currentOffer = offer }, Cmd.none )
+            ( { model | currentOffer = offer, offerMessage = NoOffer }, Cmd.none )
 
         CancelOffer ->
             ( { model | makeOffer = False, itemUnderOffer = Nothing }, Cmd.none )
 
         MakeOffer ->
-            ( model, Cmd.none )
+            ( processOffer model, Cmd.none )
 
         NewBargainPrice priceDifference ->
             ( { model | secretPrice = getSecretPrice model priceDifference }, Cmd.none )
+
+
+
+processOffer : Model -> Model
+processOffer model =
+    model
+    |> checkOffer
+    |> updateOfferResult model
+
+
+updateOfferResult : Model -> OfferMessage -> Model
+updateOfferResult model offerMessage =
+    let
+        newModel =
+            { model | offerMessage = offerMessage }
+    in
+        if offerMessage == AcceptedOfferMessage then
+            case model.itemUnderOffer of
+                Just item ->
+                    buyItem newModel item
+                    
+                Nothing ->
+                    newModel
+
+        else
+            newModel
+                
+
+checkOffer : Model -> OfferMessage
+checkOffer model =
+    let
+        offerValue =
+            Maybe.withDefault 0 (String.toInt model.currentOffer)
+    in
+    if offerValue >= model.secretPrice then
+        AcceptedOfferMessage
+
+    else
+        RejectedOfferMessage
 
 
 getSecretPrice : Model -> Int -> Int
@@ -243,6 +289,17 @@ offerDialog model =
 
                 Nothing ->
                     "Unknown"
+
+        messageText =
+            case model.offerMessage of
+                NoOffer ->
+                    ""
+
+                RejectedOfferMessage ->
+                    "Offer Rejected"
+
+                AcceptedOfferMessage ->
+                    "Tis Yours!"
     in
     if model.makeOffer then
         el
@@ -252,7 +309,7 @@ offerDialog model =
             , Font.alignLeft
             , padding 10
             , width (px 350)
-            , height (px 150)
+            , height (px 180)
             , centerX
             , centerY
             , Border.rounded 10
@@ -269,34 +326,51 @@ offerDialog model =
                         , label = Input.labelAbove [] <| text ("Make an offer on " ++ itemString)
                         }
                     ]
+                , el [ Font.color white, centerX, paddingEach { top = 0, bottom = 25, left = 0, right = 0 } ] <| text messageText
                 , row [ alignRight, spacingXY 5 0 ]
-                    [ Input.button
-                        [ Background.color blue
-                        , Element.focused
-                            [ Background.color blue ]
-                        , Font.color white
-                        , alignRight
-                        ]
-                        { onPress = Just CancelOffer
-                        , label = el [] <| text "Cancel"
-                        }
-                    , Input.button
-                        [ Background.color blue
-                        , Element.focused
-                            [ Background.color blue ]
-                        , Font.color white
-                        , alignRight
-                        ]
-                        { onPress = Just MakeOffer
-                        , label = el [] <| text "Offer"
-                        }
-                    ]
+                    (showOfferButtons model.offerMessage)
                 ]
 
     else
         none
 
 
+showOfferButtons : OfferMessage -> List (Element Msg)
+showOfferButtons offerMessage =
+    if offerMessage /= AcceptedOfferMessage then
+        [ Input.button
+            [ Background.color blue
+            , Element.focused
+                [ Background.color blue ]
+            , Font.color white
+            , alignRight
+            ]
+            { onPress = Just CancelOffer
+            , label = el [] <| text "Cancel"
+            }
+        , Input.button
+            [ Background.color blue
+            , Element.focused
+                [ Background.color blue ]
+            , Font.color white
+            , alignRight
+            ]
+            { onPress = Just MakeOffer
+            , label = el [] <| text "Offer"
+            }
+        ]
+    else
+        [ Input.button
+            [ Background.color blue
+            , Element.focused
+                [ Background.color blue ]
+            , Font.color white
+            , alignRight
+            ]
+            { onPress = Just CancelOffer
+            , label = el [] <| text "OK"
+            }
+       ]
 
 ---- VIEW HOLDING PAGE ----
 
