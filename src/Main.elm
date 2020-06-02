@@ -1,4 +1,4 @@
-module Main exposing (Model, Page(..), OfferMessage(..), buyItem, checkOffer, init, main)
+module Main exposing (Model, OfferMessage(..), Page(..), buyItem, checkOffer, init, main)
 
 import Browser
 import Character exposing (Character)
@@ -36,6 +36,7 @@ type Page
     | CharacterGenerator
     | TheGame
     | ShopPage
+    | SaveCharacter
 
 
 type alias Model =
@@ -102,6 +103,7 @@ type Msg
     | MakeOffer
     | NewBargainPrice Int
 
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -151,13 +153,11 @@ processPageCmd page =
         Cmd.none
 
 
-
-
 processOffer : Model -> Model
 processOffer model =
     model
-    |> checkOffer
-    |> updateOfferResult model
+        |> checkOffer
+        |> updateOfferResult model
 
 
 updateOfferResult : Model -> OfferMessage -> Model
@@ -166,17 +166,17 @@ updateOfferResult model offerMessage =
         newModel =
             { model | offerMessage = offerMessage }
     in
-        if offerMessage == AcceptedOfferMessage then
-            case model.itemUnderOffer of
-                Just item ->
-                    buyItem newModel item
-                    
-                Nothing ->
-                    newModel
+    if offerMessage == AcceptedOfferMessage then
+        case model.itemUnderOffer of
+            Just item ->
+                buyItem newModel item
 
-        else
-            newModel
-                
+            Nothing ->
+                newModel
+
+    else
+        newModel
+
 
 checkOffer : Model -> OfferMessage
 checkOffer model =
@@ -237,6 +237,9 @@ view model =
 
         ShopPage ->
             shopPage model
+
+        SaveCharacter ->
+            saveCharacter model.character
 
 
 
@@ -365,6 +368,7 @@ showOfferButtons offerMessage =
             , label = el [] <| text "Offer"
             }
         ]
+
     else
         [ Input.button
             [ Background.color blue
@@ -376,7 +380,9 @@ showOfferButtons offerMessage =
             { onPress = Just CancelOffer
             , label = el [] <| text "OK"
             }
-       ]
+        ]
+
+
 
 ---- VIEW HOLDING PAGE ----
 
@@ -407,9 +413,24 @@ shopPage model =
             column [ width fill, paddingXY 0 100 ]
                 ((el [ Font.size 20, Font.color white ] <| text ("Gold Coins: " ++ String.fromInt (Character.getGold model.character)))
                     :: printArmouryItems model
+                    ++ saveCharacterButton
                 )
         ]
     }
+
+
+saveCharacterButton : List (Element Msg)
+saveCharacterButton =
+    [ el [ Font.alignRight ] <|
+        Input.button
+            [ Background.color blue
+            , Element.focused
+                [ Background.color blue ]
+            ]
+            { onPress = Just (OptionSelected SaveCharacter)
+            , label = text "Save Character"
+            }
+    ]
 
 
 printArmouryItems : Model -> List (Element Msg)
@@ -530,13 +551,7 @@ characterGeneratorPage character =
     , body =
         [ layout [ Background.color black ] <|
             column [ width fill, paddingXY 0 100 ]
-                ([ Input.text [ Font.size 20, Font.color black, width (fill |> minimum 300 |> maximum 300) ]
-                    { onChange = UpdateName
-                    , text = Maybe.withDefault "" (Character.getName character)
-                    , placeholder = Just (Input.placeholder [ Font.size 20, Font.color black ] <| text "Enter character name")
-                    , label = Input.labelLeft [ Font.size 20, Font.color white ] <| text "Name: "
-                    }
-                 , el [ Font.size 20, Font.color white ] <| text (Character.getClassString character)
+                ([ el [ Font.size 20, Font.color white ] <| text (Character.getClassString character)
                  ]
                     ++ List.map (printStats (Character.getStatPoints character)) (Character.getStatList character)
                     ++ [ buildStatElement "Stat Points" (Character.getStatPoints character)
@@ -632,6 +647,35 @@ buildList option =
         ]
     <|
         text option.description
+
+
+
+---- VIEW SAVE CHARACTER PAGE ----
+
+
+saveCharacter : Character -> Browser.Document Msg
+saveCharacter character =
+    { title = "Dungeon of Doom - Save Character"
+    , body =
+        [ layout [ Background.color black ] <|
+            column [ width fill, paddingXY 0 100 ]
+                [ Input.text [ Font.size 20, Font.color black, width (fill |> minimum 300 |> maximum 300) ]
+                    { onChange = UpdateName
+                    , text = Maybe.withDefault "" (Character.getName character)
+                    , placeholder = Just (Input.placeholder [ Font.size 20, Font.color black ] <| text "Enter character name")
+                    , label = Input.labelLeft [ Font.size 20, Font.color white ] <| text "Name: "
+                    }
+                , Input.button
+                    [ Background.color blue
+                    , Element.focused
+                        [ Background.color blue ]
+                    ]
+                    { onPress = Just (OptionSelected MenuPage)
+                    , label = text "Save"
+                    }
+                ]
+        ]
+    }
 
 
 
