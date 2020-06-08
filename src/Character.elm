@@ -4,6 +4,7 @@ module Character exposing
     , Stat
     , addToInventory
     , decrementCharacterStat
+    , encodeCharacter
     , getClass
     , getClassString
     , getGold
@@ -15,8 +16,8 @@ module Character exposing
     , incrementCharacterStat
     , initGold
     , initStats
-    , setName
     , setGold
+    , setName
     , updateCharacterStats
     )
 
@@ -24,6 +25,7 @@ import Array
 import Class exposing (CharacterClass(..), classToString)
 import Dict exposing (Dict)
 import Equipment
+import Json.Encode exposing (object, string)
 
 
 type alias Stat =
@@ -250,9 +252,11 @@ initGold (Character character) newGold =
     in
     Character { character | gold = initalGold }
 
-setGold : Int -> Character  -> Character
+
+setGold : Int -> Character -> Character
 setGold newGold (Character character) =
     Character { character | gold = newGold }
+
 
 splitRandomList : List Int -> ( Int, List Int )
 splitRandomList randomList =
@@ -350,7 +354,39 @@ getInventory : Character -> List Equipment.Item
 getInventory (Character character) =
     character.inventory
 
+
 addToInventory : Equipment.Item -> Character -> Character
 addToInventory item (Character character) =
     Character { character | inventory = character.inventory ++ [ item ] }
 
+
+encodeCharacter : Character -> Json.Encode.Value
+encodeCharacter (Character character) =
+    object
+        [ ( "Class", string (classToString character.class) )
+        , ( "Name", string (Maybe.withDefault "unknown" character.name) )
+        , ( "Experience", Json.Encode.int character.experience )
+        , ( "StatPoints", Json.Encode.int character.statPoints )
+        , ( "Gold", Json.Encode.int character.gold )
+        , ( "Stats", encodeStats character.stats )
+        , ( "Inventory", Json.Encode.list string (encodeInventory character.inventory) )
+        ]
+
+
+encodeInventory : List Equipment.Item -> List String
+encodeInventory inventory =
+    inventory
+    |> List.map Equipment.itemToString
+
+
+encodeStats : Dict String StatHolder -> Json.Encode.Value
+encodeStats stats =
+    stats
+        |> Dict.toList
+        |> List.map statEntryToJson
+        |> Json.Encode.object
+
+
+statEntryToJson : ( String, StatHolder ) -> ( String, Json.Encode.Value )
+statEntryToJson (key, statHolder) =
+    ( key, Json.Encode.int statHolder.value )

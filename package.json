@@ -1,0 +1,26 @@
+{
+  "name": "DoD",
+  "version": "1.0.0",
+  "description": "This is a learning project, created so I can get a feel for functional programming in general and Elm in particular. As a side learning project it should be noted this program may never be finished or even work.",
+  "main": "elmapp.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Snoozing101/DoD.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Snoozing101/DoD/issues"
+  },
+  "homepage": "https://github.com/Snoozing101/DoD#readme",
+  "devDependencies": {
+    "pouchdb": "^7.2.1"
+  }
+}

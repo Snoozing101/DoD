@@ -1,4 +1,4 @@
-module Main exposing (Model, OfferMessage(..), Page(..), buyItem, checkOffer, init, main)
+port module Main exposing (Model, OfferMessage(..), Page(..), buyItem, checkOffer, init, main)
 
 import Browser
 import Character exposing (Character)
@@ -9,6 +9,7 @@ import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Equipment exposing (Equipment, EquipmentCategory(..), equipmentCategorytoString, equipmentList)
+import Json.Encode exposing (object)
 import Random
 
 
@@ -102,6 +103,7 @@ type Msg
     | CancelOffer
     | MakeOffer
     | NewBargainPrice Int
+    | SaveCharacterToDB
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -142,6 +144,9 @@ update msg model =
 
         NewBargainPrice priceDifference ->
             ( { model | secretPrice = getSecretPrice model priceDifference }, Cmd.none )
+
+        SaveCharacterToDB ->
+            ( model, saveCharacterToDB (Json.Encode.encode 2 (Character.encodeCharacter model.character)) )
 
 
 processPageCmd : Page -> Cmd Msg
@@ -239,7 +244,7 @@ view model =
             shopPage model
 
         SaveCharacter ->
-            saveCharacter model.character
+            saveCharacterScreen model.character
 
 
 
@@ -653,8 +658,8 @@ buildList option =
 ---- VIEW SAVE CHARACTER PAGE ----
 
 
-saveCharacter : Character -> Browser.Document Msg
-saveCharacter character =
+saveCharacterScreen : Character -> Browser.Document Msg
+saveCharacterScreen character =
     { title = "Dungeon of Doom - Save Character"
     , body =
         [ layout [ Background.color black ] <|
@@ -670,7 +675,7 @@ saveCharacter character =
                     , Element.focused
                         [ Background.color blue ]
                     ]
-                    { onPress = Just (OptionSelected MenuPage)
+                    { onPress = Just SaveCharacterToDB
                     , label = text "Save"
                     }
                 ]
@@ -793,3 +798,10 @@ processDecrement statValue characterStat =
 
     else
         Nothing
+
+
+
+---- PORTS ----
+
+
+port saveCharacterToDB : String -> Cmd msg
