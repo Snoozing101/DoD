@@ -364,7 +364,7 @@ encodeCharacter : Character -> Json.Encode.Value
 encodeCharacter (Character character) =
     object
         [ ( "Class", string (classToString character.class) )
-        , ( "Name", string (Maybe.withDefault "unknown" character.name) )
+        , ( "_id", string (Maybe.withDefault "unknown" character.name) )
         , ( "Experience", Json.Encode.int character.experience )
         , ( "StatPoints", Json.Encode.int character.statPoints )
         , ( "Gold", Json.Encode.int character.gold )

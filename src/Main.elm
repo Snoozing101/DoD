@@ -146,7 +146,7 @@ update msg model =
             ( { model | secretPrice = getSecretPrice model priceDifference }, Cmd.none )
 
         SaveCharacterToDB ->
-            ( model, saveCharacterToDB (Json.Encode.encode 2 (Character.encodeCharacter model.character)) )
+            ( { model | currPage = MenuPage }, saveCharacterToDB (Json.Encode.encode 2 (Character.encodeCharacter model.character)) )
 
 
 processPageCmd : Page -> Cmd Msg

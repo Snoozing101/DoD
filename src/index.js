@@ -10,7 +10,9 @@ const app = Elm.Main.init({
 });
 
 app.ports.saveCharacterToDB.subscribe(message => {
-    console.log('Port emitted a new message: ' + message);
+    // console.log('Port emitted a new message: ' + message);
+    var characterToSave = JSON.parse(message);
+    db.put(characterToSave);
 });
 
 // If you want your app to work offline and load faster, you can change
