@@ -2,6 +2,7 @@ port module Main exposing (Model, OfferMessage(..), Page(..), buyItem, checkOffe
 
 import Browser
 import Character exposing (Character)
+import Dropdown
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -9,7 +10,7 @@ import Element.Events exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Equipment exposing (Equipment, EquipmentCategory(..), equipmentCategorytoString, equipmentList)
-import Json.Encode exposing (object)
+import Json.Encode
 import Random
 
 
@@ -49,6 +50,10 @@ type alias Model =
     , offerMessage : OfferMessage
     , character : Character
     , shop : List Equipment
+    , dropdownState : Dropdown.State String
+    , optionPicked : Maybe String
+    , characterList : List String
+    , tempCharacter : String
     }
 
 
@@ -72,6 +77,10 @@ init _ =
       , offerMessage = NoOffer
       , character = Character.initStats Nothing
       , shop = Equipment.equipmentList
+      , dropdownState = Dropdown.init "dropdown"
+      , optionPicked = Nothing
+      , characterList = []
+      , tempCharacter = ""
       }
     , Cmd.none
     )
@@ -83,11 +92,14 @@ init _ =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Sub.batch
+        [ characterListReceiver CharListRecv
+        , characterReceiver CharRecv
+        ]
 
 
 
----- UPDATE ----
+---- U PDATE ----
 
 
 type Msg
@@ -104,6 +116,10 @@ type Msg
     | MakeOffer
     | NewBargainPrice Int
     | SaveCharacterToDB
+    | OptionPicked (Maybe String)
+    | DropdownMsg (Dropdown.Msg String)
+    | CharListRecv (List String)
+    | CharRecv String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -148,11 +164,43 @@ update msg model =
         SaveCharacterToDB ->
             ( { model | currPage = MenuPage }, saveCharacterToDB (Json.Encode.encode 2 (Character.encodeCharacter model.character)) )
 
+        OptionPicked option ->
+            ( { model | optionPicked = option }, retrieveCharacter (processSelectedCharacter option) )
+
+        DropdownMsg subMsg ->
+            let
+                ( state, cmd ) =
+                    Dropdown.update dropdownConfig subMsg model.dropdownState model.characterList
+            in
+            ( { model | dropdownState = state }, cmd )
+
+        CharListRecv newCharacterList ->
+            ( { model | characterList = newCharacterList }, Cmd.none )
+
+        CharRecv retrievedChar ->
+            ( { model | tempCharacter = retrievedChar }, Cmd.none )
+
+
+processSelectedCharacter : Maybe String -> String
+processSelectedCharacter selectedOption =
+    case selectedOption of
+        Just character ->
+            character
+            |> String.words
+            |> List.head
+            |> Maybe.withDefault "" 
+
+        Nothing ->
+            ""
+
 
 processPageCmd : Page -> Cmd Msg
 processPageCmd page =
     if page == CharacterGenerator then
         Cmd.batch [ Random.generate NewCharacter newStats, Random.generate NewGold initialGold ]
+
+    else if page == TheGame then
+        retrieveCharacterList ()
 
     else
         Cmd.none
@@ -238,7 +286,7 @@ view model =
             characterGeneratorPage model.character
 
         TheGame ->
-            holdingPage "The Game"
+            theGamePage model
 
         ShopPage ->
             shopPage model
@@ -684,6 +732,35 @@ saveCharacterScreen character =
 
 
 
+---- VIEW THE GAME PAGE ----
+
+
+theGamePage : Model -> Browser.Document Msg
+theGamePage model =
+    { title = "Dungeon of Doom - The Game"
+    , body =
+        [ layout [ Background.color black ] <|
+            column [ width fill, paddingXY 0 100 ]
+                [ Dropdown.view dropdownConfig model.dropdownState model.characterList
+                    |> el [ Font.color white ]
+                ]
+        ]
+    }
+
+
+dropdownConfig : Dropdown.Config String Msg
+dropdownConfig =
+    let
+        itemToPrompt item =
+            Element.text item
+
+        itemToElement selected highlighted item =
+            Element.text item
+    in
+    Dropdown.basic DropdownMsg OptionPicked itemToPrompt itemToElement
+
+
+
 ---- COLOR SETTING ----
 
 
@@ -805,3 +882,15 @@ processDecrement statValue characterStat =
 
 
 port saveCharacterToDB : String -> Cmd msg
+
+
+port retrieveCharacterList : () -> Cmd msg
+
+
+port retrieveCharacter : String -> Cmd msg
+
+
+port characterListReceiver : (List String -> msg) -> Sub msg
+
+
+port characterReceiver : (String -> msg) -> Sub msg
