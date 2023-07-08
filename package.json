@@ -21,6 +21,6 @@
   },
   "homepage": "https://github.com/Snoozing101/DoD#readme",
   "devDependencies": {
-    "pouchdb": "^7.2.1"
+    "pouchdb": "^7.3.1"
   }
 }
